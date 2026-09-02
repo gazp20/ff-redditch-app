@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FF Redditch App v0.2</title>
+<style>
+:root{--bg:#0b0c0e;--card:#17191d;--card2:#22252b;--gold:#d8b33f;--text:#f5f5f3;--muted:#a7abb3;--green:#49cf7c;--red:#ef6066;--line:#2c3037}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;padding-bottom:92px}
+header{padding:16px 18px 11px;position:sticky;top:0;background:rgba(11,12,14,.96);z-index:5;border-bottom:1px solid var(--line)}
+.brand{font-weight:900;letter-spacing:.7px}.brand b{color:var(--gold)}.sub{font-size:11px;color:var(--muted);margin-top:3px}
+main{max-width:760px;margin:auto;padding:14px}.screen{display:none}.screen.active{display:block}
+.hero,.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:17px;margin-bottom:11px}
+.hero{background:linear-gradient(135deg,#25282e,#111214)}
+.eyebrow{color:var(--gold);font-size:11px;font-weight:900;letter-spacing:1px}.muted{color:var(--muted)}
+h1{font-size:24px;margin:7px 0}h2{font-size:18px;margin:6px 0 10px}h3{font-size:14px;margin:0 0 9px}
+.big{font-size:25px;font-weight:900;margin-top:4px}.gold{color:var(--gold)}.green{color:var(--green)}.red{color:var(--red)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.listrow{padding:11px 0;border-bottom:1px solid var(--line)}.listrow:last-child{border:0}
+.pill{font-size:11px;font-weight:900;border-radius:999px;padding:7px 9px;background:#292c32}.paid{background:#183b28;color:#8be8ad}
+.btn{border:0;border-radius:12px;padding:12px 14px;font-weight:900}.btn-gold{background:var(--gold);color:#16130a}.btn-green{background:var(--green);color:#07160d}.btn-red{background:var(--red);color:#fff}.btn-dark{background:var(--card2);color:#fff;border:1px solid #3a3e45}
+.choice{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:13px}.stack{display:grid;gap:8px}
+.stats5{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:12px}.mini{background:#101114;border:1px solid var(--line);border-radius:12px;text-align:center;padding:10px 4px}.mini b{font-size:19px;display:block}.mini small{font-size:9px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:9px 4px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-size:10px;text-transform:uppercase}
+input{width:76px;background:#0e0f11;border:1px solid #3c4047;color:#fff;border-radius:8px;padding:8px}.toggle{background:#292c32;color:#aaa;border:1px solid #3c4047;border-radius:8px;padding:7px}.toggle.on{background:#183b28;color:#8be8ad}
+.adminrow{display:grid;grid-template-columns:1fr auto;gap:8px;padding:11px 0;border-bottom:1px solid var(--line)}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:6;background:#111215;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(7,1fr);padding-bottom:env(safe-area-inset-bottom)}
+nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:9px}.navicon{font-size:18px;display:block;margin-bottom:3px}nav button.active{color:var(--gold)}
+@media(max-width:480px){main{padding:11px}.stats5{gap:4px}.mini{padding:9px 2px}.mini b{font-size:17px}}
+</style>
+</head>
+<body>
+<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP PROTOTYPE v0.5.2 · TEST DATA ONLY</div></header>
+<main>
+<section id="home" class="screen active">
+<div class="hero"><div class="eyebrow">WELCOME BACK, GAZ</div><h1>Your FF Redditch</h1><div class="muted">Football · Fitness · Community</div></div>
+<div class="card"><div class="row"><div><div class="eyebrow">NEXT TNF</div><h2>Tuesday 8 September · 8:00pm</h2><div class="muted">Arrowvale 3G · 12/18 playing</div></div><span class="pill paid">I'M IN</span></div></div>
+<div class="card">
+<div class="row">
+  <div>
+    <div class="eyebrow">NEXT 11s</div>
+    <h2>Wrexham (H)</h2>
+    <div class="muted">Sunday 6 September · 16:15</div>
+    <div class="muted">Arrowvale 3G</div>
+  </div>
+  <span class="pill paid">AVAILABLE ✓</span>
+</div>
+</div></div>
+<div class="grid"><div class="card"><div class="muted">FF Points</div><div class="big gold">42</div></div><div class="card"><div class="muted">Balance</div><div class="big">£5.50</div><small class="red">Due</small></div><div class="card"><div class="muted">Streak</div><div class="big">4 🔥</div></div><div class="card"><div class="muted">Attendance</div><div class="big">88%</div></div></div>
+<div class="card"><div class="eyebrow">CLUB NEWS</div><h2>Top scorer: Dan Bowen</h2><div class="muted">5% Club: Dan Bowen & Mark Sanders</div></div>
+</section>
+
+<section id="tnf" class="screen"><div class="hero"><div class="eyebrow">TNF</div><h1>Tuesday 8 September</h1><div class="muted">8:00pm · Arrowvale 3G</div><div class="big">12 / 18</div><div class="choice"><button class="btn btn-green">✓ I'M IN</button><button class="btn btn-red">✕ I'M OUT</button></div></div><div class="card"><div class="row"><b>Status</b><span class="pill paid">IN · PAID</span></div></div><div class="card"><h3>SESSION</h3><div class="listrow row"><span>Registration</span><b>Open</b></div><div class="listrow row"><span>Teams</span><span class="muted">Released Tuesday</span></div></div></section>
+
+<section id="ffr" class="screen"><div class="hero"><div class="eyebrow">FFR</div><h1>League & Journey</h1></div><div class="grid"><div class="card"><div class="muted">FF Points</div><div class="big gold">42</div></div><div class="card"><div class="muted">Position</div><div class="big">#6</div></div></div><div class="card"><h3>MY WEIGHT JOURNEY</h3><div style="height:130px;display:flex;align-items:end;gap:8px"><div style="height:95%;flex:1;background:#353941"></div><div style="height:86%;flex:1;background:#353941"></div><div style="height:78%;flex:1;background:#353941"></div><div style="height:69%;flex:1;background:#353941"></div><div style="height:60%;flex:1;background:#d8b33f"></div></div><div class="row muted"><small>Week 1</small><small>Latest</small></div></div>
+<div class="card"><h3>FFR LEAGUE TABLE</h3><table><tr><th>#</th><th>Player</th><th>Pts</th></tr><tr><td>1</td><td>Dan Bowen</td><td>55</td></tr><tr><td>2</td><td>Mark Sanders</td><td>51</td></tr><tr><td>3</td><td>Kem Nedjat</td><td>48</td></tr><tr><td>6</td><td><b>You</b></td><td class="gold">42</td></tr></table></div>
+<div class="card"><h3>MOST WEIGHT LOST</h3><table><tr><th>#</th><th>Player</th><th>% Lost</th></tr><tr><td>1</td><td>Dan Bowen</td><td>6.2%</td></tr><tr><td>2</td><td>Mark Sanders</td><td>5.4%</td></tr><tr><td>3</td><td>Craig Wood</td><td>4.8%</td></tr></table></div>
+<div class="card"><div class="eyebrow">TEAM OF THE WEEK</div><h2>Top 5 this week</h2><div class="listrow row"><b>Dan Bowen</b><span class="pill">7 pts</span></div><div class="listrow row"><span>Mark Sanders</span><span class="pill">6 pts</span></div><div class="listrow row"><span>Kem Nedjat</span><span class="pill">5 pts</span></div><div class="listrow row"><span>Craig Wood</span><span class="pill">4 pts</span></div><div class="listrow row"><span>Ryan Sproston</span><span class="pill">4 pts</span></div></div><div class="card"><h3>RECENT POINTS</h3><div class="listrow row"><span>Weight loss</span><b class="green">+2</b></div><div class="listrow row"><span>Winning TNF team</span><b class="green">+1</b></div><div class="listrow row"><span>Goal</span><b class="green">+1</b></div></div></section>
+
+<section id="elevens" class="screen">
+<div class="hero">
+  <div class="eyebrow">NEXT 11s</div>
+  <h1>Wrexham (H)</h1>
+  <div class="muted">Sunday 6 September · 16:15 · Arrowvale 3G</div>
+  <h2 style="margin-top:18px">Are you available?</h2>
+  <div class="choice">
+    <button class="btn btn-green" onclick="set11s('available')">✓ I'M AVAILABLE</button>
+    <button class="btn btn-red" onclick="set11s('unavailable')">✕ NOT AVAILABLE</button>
+  </div>
+  <div id="avail11" class="pill" style="display:inline-block;margin-top:12px">NO RESPONSE YET</div>
+</div>
+<div class="card">
+  <div class="eyebrow">SQUAD STATUS</div>
+  <h2 id="squadStatus">Awaiting squad selection</h2>
+  <div class="muted">Submitting availability does not create a payment. If selected, your £6 match fee will be added to Payments.</div>
+</div>
+<div class="card">
+  <h3>HOW 11s WORKS</h3>
+  <div class="listrow"><b>1. Availability</b><div class="muted">Tell the management team if you're available.</div></div>
+  <div class="listrow"><b>2. Squad selected</b><div class="muted">Admins choose the match squad.</div></div>
+  <div class="listrow"><b>3. £6 match fee</b><div class="muted">Only selected players receive the charge.</div></div>
+</div>
+<div class="card">
+<div class="eyebrow">SEASON AVAILABILITY</div><h2>Plan ahead</h2>
+<div class="muted">You can submit or change your availability for every upcoming 11s fixture.</div>
+<button class="btn btn-dark" style="width:100%;margin-top:12px" onclick="document.getElementById('all11games').style.display='block'">VIEW ALL FIXTURES & VOTE</button>
+<div id="all11games" style="display:none;margin-top:12px">
+<div class="listrow"><div class="row"><b>Wrexham (H) · 6 Sep</b><span class="pill paid">Available</span></div><div class="choice"><button class="btn btn-green">Available</button><button class="btn btn-dark">Not Available</button></div></div>
+<div class="listrow"><div class="row"><b>Wirral · Upcoming</b><span class="pill">No reply</span></div><div class="choice"><button class="btn btn-green">Available</button><button class="btn btn-dark">Not Available</button></div></div>
+<div class="listrow"><div class="row"><b>Oldbury Lions · Upcoming</b><span class="pill">No reply</span></div><div class="choice"><button class="btn btn-green">Available</button><button class="btn btn-dark">Not Available</button></div></div>
+<div class="listrow"><div class="row"><b>Stoke · Upcoming</b><span class="pill">No reply</span></div><div class="choice"><button class="btn btn-green">Available</button><button class="btn btn-dark">Not Available</button></div></div>
+</div></div>
+<div class="card"><h3>UPCOMING 11s</h3>
+  <div class="listrow row"><span>Wrexham (H)</span><b>6 Sep</b></div>
+  <div class="listrow row"><span>Wirral</span><b>Upcoming</b></div>
+  <div class="listrow row"><span>Oldbury Lions</span><b>Upcoming</b></div>
+</div>
+</section>
+
+<section id="payments" class="screen"><div class="hero"><div class="eyebrow">PAYMENTS</div><h1>£0.50 due</h1><div class="muted">TNF · 11s/Friendlies · Fines</div></div><div class="card"><div class="listrow row"><span>TNF · 8 Sept</span><b class="green">PAID £5</b></div><div class="listrow row"><span>11s · Wrexham</span><span class="muted">Awaiting selection</span></div><div class="listrow row"><span>Warm-up fine</span><b class="red">DUE £0.50</b></div><button class="btn btn-gold" style="width:100%;margin-top:12px">PAY £0.50</button></div><div class="card"><h3>PAYMENT HISTORY</h3><div class="listrow row"><span>TNF · 1 Sept</span><span class="green">£5 PAID</span></div></div></section>
+
+<section id="admin" class="screen"><div class="hero"><div class="eyebrow">ADMIN TEAM · 3 ACCOUNTS</div><h1>FF Redditch Control</h1>
+    <div class="muted">Shared cover for TNF, 11s, weigh-ins, payments and club admin.</div>
+    <div class="stack" style="margin-top:14px">
+      <div class="row"><span>👑 Gaz Price</span><span class="pill paid">ADMIN</span></div>
+      <div class="row"><span>⚙ Stu Lees</span><span class="pill paid">ADMIN</span></div>
+      <div class="row"><span>🛡 Michael Sealey</span><span class="pill paid">ADMIN</span></div>
+    </div></div><div class="grid"><div class="card"><div class="muted">TNF IN</div><div class="big green">12/18</div></div><div class="card"><div class="muted">NO REPLY</div><div class="big">7</div></div><div class="card"><div class="muted">Collected</div><div class="big">£85</div></div><div class="card"><div class="muted">Owed</div><div class="big red">£15</div></div></div><div class="card">
+<div class="eyebrow">11s · AVAILABILITY FORECAST</div><h2>Upcoming Games</h2>
+<div class="muted">Quick view so the admin team can see likely numbers well in advance.</div>
+<table style="margin-top:10px"><tr><th>Fixture</th><th>Avail.</th><th>No</th><th>Reply</th></tr>
+<tr><td>Wrexham (H)<br><small class="muted">6 Sep</small></td><td class="green"><b>14</b></td><td>4</td><td>7</td></tr>
+<tr><td>Wirral<br><small class="muted">Upcoming</small></td><td class="green"><b>17</b></td><td>3</td><td>5</td></tr>
+<tr><td>Oldbury Lions<br><small class="muted">Upcoming</small></td><td class="green"><b>12</b></td><td>5</td><td>8</td></tr>
+<tr><td>Stoke<br><small class="muted">Upcoming</small></td><td class="green"><b>10</b></td><td>2</td><td>13</td></tr>
+</table>
+<button class="btn btn-dark" style="width:100%;margin-top:12px">VIEW PLAYER-BY-PLAYER AVAILABILITY</button>
+</div>
+<div class="card">
+<div class="eyebrow">11s · WREXHAM</div><h2>Availability & Squad Selection</h2>
+<div class="grid"><div class="mini"><b>14</b><small>AVAILABLE</small></div><div class="mini"><b>4</b><small>NOT AVAILABLE</small></div><div class="mini"><b>7</b><small>NO REPLY</small></div><div class="mini"><b>0</b><small>SELECTED</small></div></div>
+<div style="margin-top:12px">
+<table><tr><th>Player</th><th>Status</th><th>Squad</th></tr>
+<tr><td>Dan Bowen</td><td class="green">Available</td><td><button class="toggle" onclick="selectPlayer(this)">Select</button></td></tr>
+<tr><td>Kem Nedjat</td><td class="green">Available</td><td><button class="toggle" onclick="selectPlayer(this)">Select</button></td></tr>
+<tr><td>Craig Wood</td><td class="green">Available</td><td><button class="toggle" onclick="selectPlayer(this)">Select</button></td></tr>
+<tr><td>Chris Brazier</td><td class="red">Unavailable</td><td>—</td></tr>
+<tr><td>Ryan Sproston</td><td class="muted">No reply</td><td>—</td></tr></table>
+</div>
+<button class="btn btn-gold" style="width:100%;margin-top:12px" onclick="confirmSquad()">CONFIRM SQUAD</button>
+<div class="muted" style="font-size:11px;margin-top:8px">Confirming the squad creates a £6 payment item for selected players only.</div>
+</div><div class="card"><h3>TUESDAY WEIGH-IN</h3><div id="players"></div><button class="btn btn-gold" style="width:100%;margin-top:12px" onclick="alert('Prototype only — nothing live changed.')">COMPLETE SESSION & CALCULATE POINTS</button></div><div class="card stack"><button class="btn btn-dark">Create / Edit TNF Session</button><button class="btn btn-dark">Allocate Teams</button><button class="btn btn-dark">Add Fine</button><button class="btn btn-dark">11s Match Admin</button><button class="btn btn-dark">Payments & Outstanding</button></div></section>
+
+<section id="more" class="screen"><div class="hero"><div class="eyebrow">MORE</div><h1>Club Hub</h1></div><div class="card stack"><button class="btn btn-dark">🍽 Matchday Fuel</button><button class="btn btn-dark">📖 FFR Rule Book</button><button class="btn btn-dark">📰 Club News</button><button class="btn btn-dark">👕 Kit Bag</button><button class="btn btn-dark">👤 Account</button></div></section>
+</main>
+<nav>
+<button class="active" data-s="home" onclick="go('home')"><span class="navicon">⌂</span>Home</button>
+<button data-s="tnf" onclick="go('tnf')"><span class="navicon">⚽</span>TNF</button>
+<button data-s="ffr" onclick="go('ffr')"><span class="navicon">🏆</span>FFR</button>
+<button data-s="elevens" onclick="go('elevens')"><span class="navicon">11</span>11s</button>
+<button data-s="payments" onclick="go('payments')"><span class="navicon">£</span>Payments</button>
+<button data-s="admin" onclick="go('admin')"><span class="navicon">⚙</span>Admin</button>
+<button data-s="more" onclick="go('more')"><span class="navicon">☰</span>More</button>
+</nav>
+<script>
+function go(id){
+  document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
+  const screen=document.getElementById(id);
+  if(screen) screen.classList.add('active');
+  document.querySelectorAll('nav button').forEach(e=>e.classList.toggle('active',e.dataset.s===id));
+  window.scrollTo(0,0);
+}
+const names=['Dan Bowen','Chris Brazier','Kem Nedjat','Craig Wood','Ryan Sproston'];
+document.getElementById('players').innerHTML=names.map(n=>`
+  <div class="adminrow">
+    <div>
+      <b>${n}</b>
+      <div class="muted">Weight <input placeholder="kg"></div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:7px">
+        <button class="toggle on" onclick="this.classList.toggle('on')">Attended</button>
+        <button class="toggle" onclick="this.classList.toggle('on')">Winner +1</button>
+        <button class="toggle" onclick="this.classList.toggle('on')">⚽ Goal +1</button>
+      </div>
+    </div>
+  </div>`).join('');
+
+function set11s(status){
+  const el=document.getElementById('avail11');
+  if(status==='available'){el.textContent='✓ AVAILABILITY SUBMITTED';el.className='pill paid';}
+  else{el.textContent='✕ NOT AVAILABLE';el.className='pill';}
+}
+function selectPlayer(btn){
+  btn.classList.toggle('on');
+  btn.textContent=btn.classList.contains('on')?'Selected':'Select';
+}
+function confirmSquad(){
+  alert('Prototype: squad confirmed. In the real app, selected players now receive their £6 match fee and a selection notification.');
+}
+
+</script>
+</body></html>
