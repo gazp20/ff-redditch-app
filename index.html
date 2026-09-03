@@ -295,5 +295,9 @@ function confirmSquad(){
   alert('Prototype: squad confirmed. In the real app, selected players now receive their £6 match fee and a selection notification.');
 }
 
+  Promise.allSettled([
+  loadMember(),
+  loadTnf()
+]);
 </script>
 </body></html>
