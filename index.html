@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>FF Redditch App v0.2</title>
+<title>FF Redditch App v0.6.0</title>
 <style>
 :root{--bg:#0b0c0e;--card:#17191d;--card2:#22252b;--gold:#d8b33f;--text:#f5f5f3;--muted:#a7abb3;--green:#49cf7c;--red:#ef6066;--line:#2c3037}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;padding-bottom:92px}
@@ -29,11 +29,11 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 </style>
 </head>
 <body>
-<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP PROTOTYPE v0.5.2 · TEST DATA ONLY</div></header>
+<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.6.0 · TNF LIVE</div></header>
 <main>
 <section id="home" class="screen active">
-<div class="hero"><div class="eyebrow">WELCOME BACK, GAZ</div><h1>Your FF Redditch</h1><div class="muted">Football · Fitness · Community</div></div>
-<div class="card"><div class="row"><div><div class="eyebrow">NEXT TNF</div><h2>Tuesday 8 September · 8:00pm</h2><div class="muted">Arrowvale 3G · 12/18 playing</div></div><span class="pill paid">I'M IN</span></div></div>
+<div class="hero"><div class="eyebrow" id="homeWelcome">WELCOME BACK</div><h1>Your FF Redditch</h1><div class="muted">Football · Fitness · Community</div></div>
+<div class="card"><div class="row"><div><div class="eyebrow">NEXT TNF</div><h2 id="homeTnfTitle">Loading TNF…</h2><div class="muted" id="homeTnfMeta">Checking next session</div></div><span class="pill" id="homeTnfStatus">LOADING</span></div></div>
 <div class="card">
 <div class="row">
   <div>
@@ -49,7 +49,26 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 <div class="card"><div class="eyebrow">CLUB NEWS</div><h2>Top scorer: Dan Bowen</h2><div class="muted">5% Club: Dan Bowen & Mark Sanders</div></div>
 </section>
 
-<section id="tnf" class="screen"><div class="hero"><div class="eyebrow">TNF</div><h1>Tuesday 8 September</h1><div class="muted">8:00pm · Arrowvale 3G</div><div class="big">12 / 18</div><div class="choice"><button class="btn btn-green">✓ I'M IN</button><button class="btn btn-red">✕ I'M OUT</button></div></div><div class="card"><div class="row"><b>Status</b><span class="pill paid">IN · PAID</span></div></div><div class="card"><h3>SESSION</h3><div class="listrow row"><span>Registration</span><b>Open</b></div><div class="listrow row"><span>Teams</span><span class="muted">Released Tuesday</span></div></div></section>
+<section id="tnf" class="screen">
+<div class="hero">
+  <div class="eyebrow">TNF · LIVE</div>
+  <h1 id="tnfDate">Loading…</h1>
+  <div class="muted" id="tnfMeta">Loading session details</div>
+  <div class="big"><span id="tnfInCount">—</span> / <span id="tnfCapacity">18</span></div>
+  <div class="muted" id="tnfSpaces">Checking spaces…</div>
+  <div class="choice">
+    <button id="tnfInBtn" class="btn btn-green" onclick="saveTnfResponse('IN')" disabled>✓ I'M IN</button>
+    <button id="tnfOutBtn" class="btn btn-red" onclick="saveTnfResponse('OUT')" disabled>✕ I'M OUT</button>
+  </div>
+  <div id="tnfNotice" class="muted" style="margin-top:10px"></div>
+</div>
+<div class="card"><div class="row"><b>Your status</b><span class="pill" id="tnfMyStatus">LOADING</span></div></div>
+<div class="card"><h3>SESSION</h3>
+  <div class="listrow row"><span>Registration</span><b id="tnfRegistration">Loading…</b></div>
+  <div class="listrow row"><span>Spaces remaining</span><b id="tnfRemaining">—</b></div>
+  <div class="listrow row"><span>Teams</span><span class="muted">Released Tuesday</span></div>
+</div>
+</section>
 
 <section id="ffr" class="screen"><div class="hero"><div class="eyebrow">FFR</div><h1>League & Journey</h1></div><div class="grid"><div class="card"><div class="muted">FF Points</div><div class="big gold">42</div></div><div class="card"><div class="muted">Position</div><div class="big">#6</div></div></div><div class="card"><h3>MY WEIGHT JOURNEY</h3><div style="height:130px;display:flex;align-items:end;gap:8px"><div style="height:95%;flex:1;background:#353941"></div><div style="height:86%;flex:1;background:#353941"></div><div style="height:78%;flex:1;background:#353941"></div><div style="height:69%;flex:1;background:#353941"></div><div style="height:60%;flex:1;background:#d8b33f"></div></div><div class="row muted"><small>Week 1</small><small>Latest</small></div></div>
 <div class="card"><h3>FFR LEAGUE TABLE</h3><table><tr><th>#</th><th>Player</th><th>Pts</th></tr><tr><td>1</td><td>Dan Bowen</td><td>55</td></tr><tr><td>2</td><td>Mark Sanders</td><td>51</td></tr><tr><td>3</td><td>Kem Nedjat</td><td>48</td></tr><tr><td>6</td><td><b>You</b></td><td class="gold">42</td></tr></table></div>
@@ -142,6 +161,10 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 <button data-s="more" onclick="go('more')"><span class="navicon">☰</span>More</button>
 </nav>
 <script>
+
+let currentMember = null;
+let currentTnfSession = null;
+
 function go(id){
   document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
   const screen=document.getElementById(id);
@@ -149,6 +172,102 @@ function go(id){
   document.querySelectorAll('nav button').forEach(e=>e.classList.toggle('active',e.dataset.s===id));
   window.scrollTo(0,0);
 }
+
+function formatTnfDate(dateText){
+  const parts=String(dateText||'').split('/');
+  if(parts.length!==3) return dateText||'Next Tuesday';
+  const d=new Date(Number(parts[2]),Number(parts[1])-1,Number(parts[0]));
+  if(Number.isNaN(d.getTime())) return dateText;
+  return d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+}
+
+function setStatusPill(el,response){
+  if(!el) return;
+  const r=String(response||'').toUpperCase();
+  el.className='pill';
+  if(r==='IN'){el.textContent="I'M IN";el.classList.add('paid');}
+  else if(r==='OUT'){el.textContent="I'M OUT";}
+  else{el.textContent='NO RESPONSE';}
+}
+
+async function loadMember(){
+  try{
+    const res=await fetch('/api/me',{cache:'no-store'});
+    const data=await res.json();
+    if(!res.ok||!data.success||!data.member) throw new Error(data.error||'Could not load member');
+    currentMember=data.member;
+    const first=currentMember['First Name']||currentMember['Name']||'Member';
+    document.getElementById('homeWelcome').textContent='WELCOME BACK, '+String(first).toUpperCase();
+  }catch(e){
+    document.getElementById('homeWelcome').textContent='WELCOME BACK';
+  }
+}
+
+async function loadTnf(){
+  const inBtn=document.getElementById('tnfInBtn');
+  const outBtn=document.getElementById('tnfOutBtn');
+  try{
+    const res=await fetch('/api/tnf/next',{cache:'no-store'});
+    const data=await res.json();
+    if(!res.ok||!data.success) throw new Error(data.error||'Could not load TNF');
+    if(!data.session) throw new Error('No open TNF session');
+
+    const s=data.session;
+    currentTnfSession=s;
+    const dateLabel=formatTnfDate(s.date);
+    const count=Number(s.inCount||0);
+    const capacity=Number(s.capacity||18);
+    const remaining=Math.max(Number(s.spacesRemaining ?? (capacity-count)),0);
+
+    document.getElementById('homeTnfTitle').textContent=dateLabel+' · '+s.time;
+    document.getElementById('homeTnfMeta').textContent=s.venue+' · '+count+'/'+capacity+' playing';
+    setStatusPill(document.getElementById('homeTnfStatus'),s.myResponse);
+
+    document.getElementById('tnfDate').textContent=dateLabel;
+    document.getElementById('tnfMeta').textContent=s.time+' · '+s.venue;
+    document.getElementById('tnfInCount').textContent=count;
+    document.getElementById('tnfCapacity').textContent=capacity;
+    document.getElementById('tnfSpaces').textContent=s.full?'Session full':remaining+' spaces remaining';
+    setStatusPill(document.getElementById('tnfMyStatus'),s.myResponse);
+    document.getElementById('tnfRegistration').textContent=s.full?'Full':(s.status||'Open');
+    document.getElementById('tnfRemaining').textContent=remaining;
+
+    inBtn.disabled=false;
+    outBtn.disabled=false;
+  }catch(e){
+    document.getElementById('homeTnfTitle').textContent='Could not load TNF';
+    document.getElementById('homeTnfMeta').textContent='Please refresh';
+    document.getElementById('homeTnfStatus').textContent='ERROR';
+    document.getElementById('tnfDate').textContent='Could not load TNF';
+    document.getElementById('tnfMeta').textContent=e.message||'Please refresh';
+    document.getElementById('tnfNotice').textContent=e.message||'Could not load TNF';
+    inBtn.disabled=true; outBtn.disabled=true;
+  }
+}
+
+async function saveTnfResponse(response){
+  if(!currentTnfSession||!currentTnfSession.id) return;
+  const inBtn=document.getElementById('tnfInBtn');
+  const outBtn=document.getElementById('tnfOutBtn');
+  inBtn.disabled=true; outBtn.disabled=true;
+  document.getElementById('tnfNotice').textContent='Saving…';
+  try{
+    const res=await fetch('/api/tnf/respond',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({sessionId:currentTnfSession.id,response})
+    });
+    const data=await res.json();
+    if(!res.ok||!data.success) throw new Error(data.error||'Could not save response');
+    document.getElementById('tnfNotice').textContent=response==='IN'?"You're in for TNF ✓":"You're marked as out for TNF.";
+    await loadTnf();
+  }catch(e){
+    document.getElementById('tnfNotice').textContent=e.message||'Could not save response';
+  }finally{
+    if(currentTnfSession){inBtn.disabled=false;outBtn.disabled=false;}
+  }
+}
+
 const names=['Dan Bowen','Chris Brazier','Kem Nedjat','Craig Wood','Ryan Sproston'];
 document.getElementById('players').innerHTML=names.map(n=>`
   <div class="adminrow">
