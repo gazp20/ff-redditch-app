@@ -1,0 +1,257 @@
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+
+    // Keep Cloudflare system endpoints working
+    if (url.pathname.startsWith("/cdn-cgi/")) {
+      return env.ASSETS.fetch(request);
+    }
+
+    const json = (data, status = 200) =>
+      new Response(JSON.stringify(data), {
+        status,
+        headers: {
+          "content-type": "application/json; charset=UTF-8",
+          "cache-control": "no-store"
+        }
+      });
+
+    // ==========================================
+    // GET LOGGED-IN MEMBER EMAIL FROM CLOUDFLARE ACCESS
+    // ==========================================
+    function getAccessEmail() {
+      const accessJwt =
+        request.headers.get("Cf-Access-Jwt-Assertion");
+
+      if (!accessJwt) return "";
+
+      try {
+        const payloadPart = accessJwt.split(".")[1];
+
+        const base64 = payloadPart
+          .replace(/-/g, "+")
+          .replace(/_/g, "/");
+
+        const padded =
+          base64 +
+          "=".repeat((4 - (base64.length % 4)) % 4);
+
+        const payload = JSON.parse(atob(padded));
+
+        return String(
+          payload.email || payload.sub || ""
+        )
+          .trim()
+          .toLowerCase();
+
+      } catch (error) {
+        return "";
+      }
+    }
+
+    // ==========================================
+    // CHECK BACKEND CONFIGURATION
+    // ==========================================
+    function backendConfigured() {
+      return Boolean(
+        env.MEMBERS_API_URL &&
+        env.MEMBERS_API_SECRET
+      );
+    }
+
+    // ==========================================
+    // SEND REQUEST TO GOOGLE APPS SCRIPT
+    // ==========================================
+    async function callMembersApi(payload) {
+      if (!backendConfigured()) {
+        return {
+          ok: false,
+          status: 500,
+          body: JSON.stringify({
+            success: false,
+            error: "Members API is not configured"
+          })
+        };
+      }
+
+      try {
+        const response = await fetch(
+          String(env.MEMBERS_API_URL).trim(),
+          {
+            method: "POST",
+            headers: {
+              "accept": "application/json",
+              "content-type": "application/json"
+            },
+            body: JSON.stringify({
+              ...payload,
+              key: String(
+                env.MEMBERS_API_SECRET
+              ).trim()
+            })
+          }
+        );
+
+        return {
+          ok: response.ok,
+          status: response.status,
+          body: await response.text()
+        };
+
+      } catch (error) {
+        return {
+          ok: false,
+          status: 502,
+          body: JSON.stringify({
+            success: false,
+            error: "Could not reach members database"
+          })
+        };
+      }
+    }
+
+    // ==========================================
+    // API: CURRENT MEMBER
+    // app-test.ffredditch.co.uk/api/me
+    // ==========================================
+    if (
+      url.pathname === "/api/me" ||
+      url.pathname === "/api/me/"
+    ) {
+      const email = getAccessEmail();
+
+      if (!email) {
+        return json({
+          success: false,
+          error: "Authenticated member email not found"
+        }, 401);
+      }
+
+      const result = await callMembersApi({
+        email: email
+      });
+
+      return new Response(result.body, {
+        status: result.status,
+        headers: {
+          "content-type": "application/json; charset=UTF-8",
+          "cache-control": "no-store"
+        }
+      });
+    }
+
+    // ==========================================
+    // API: NEXT TNF SESSION
+    // app-test.ffredditch.co.uk/api/tnf/next
+    // ==========================================
+    if (
+      url.pathname === "/api/tnf/next" ||
+      url.pathname === "/api/tnf/next/"
+    ) {
+      const email = getAccessEmail();
+
+      if (!email) {
+        return json({
+          success: false,
+          error: "Authenticated member email not found"
+        }, 401);
+      }
+
+      const result = await callMembersApi({
+        action: "tnf_next_session",
+        email: email
+      });
+
+      return new Response(result.body, {
+        status: result.status,
+        headers: {
+          "content-type": "application/json; charset=UTF-8",
+          "cache-control": "no-store"
+        }
+      });
+    }
+
+    // ==========================================
+    // API: SAVE TNF AVAILABILITY
+    // app-test.ffredditch.co.uk/api/tnf/respond
+    // ==========================================
+    if (
+      url.pathname === "/api/tnf/respond" ||
+      url.pathname === "/api/tnf/respond/"
+    ) {
+      if (request.method !== "POST") {
+        return json({
+          success: false,
+          error: "POST required"
+        }, 405);
+      }
+
+      const email = getAccessEmail();
+
+      if (!email) {
+        return json({
+          success: false,
+          error: "Authenticated member email not found"
+        }, 401);
+      }
+
+      let body = {};
+
+      try {
+        body = await request.json();
+      } catch (error) {
+        return json({
+          success: false,
+          error: "Invalid JSON"
+        }, 400);
+      }
+
+      const sessionId = String(
+        body.sessionId || ""
+      ).trim();
+
+      const response = String(
+        body.response || ""
+      )
+        .trim()
+        .toUpperCase();
+
+      if (!sessionId) {
+        return json({
+          success: false,
+          error: "Session ID required"
+        }, 400);
+      }
+
+      if (
+        response !== "IN" &&
+        response !== "OUT"
+      ) {
+        return json({
+          success: false,
+          error: "Response must be IN or OUT"
+        }, 400);
+      }
+
+      const result = await callMembersApi({
+        action: "tnf_set_availability",
+        email: email,
+        sessionId: sessionId,
+        response: response
+      });
+
+      return new Response(result.body, {
+        status: result.status,
+        headers: {
+          "content-type": "application/json; charset=UTF-8",
+          "cache-control": "no-store"
+        }
+      });
+    }
+
+    // ==========================================
+    // EVERYTHING ELSE = APP FILES
+    // ==========================================
+    return env.ASSETS.fetch(request);
+  }
+};
