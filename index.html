@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>FF Redditch App v0.8.1</title>
+<title>FF Redditch App v0.8.2</title>
 <style>
 :root{--bg:#0b0c0e;--card:#17191d;--card2:#22252b;--gold:#d8b33f;--text:#f5f5f3;--muted:#a7abb3;--green:#49cf7c;--red:#ef6066;--line:#2c3037}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;padding-bottom:92px}
@@ -52,7 +52,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 </style>
 </head>
 <body>
-<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.8.1 · WEEKLY UPDATE + TEAM RESET</div></header>
+<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.8.2 · FIXTURE ORDER FIX</div></header>
 <main>
 <section id="home" class="screen active">
 <div class="hero"><div class="eyebrow" id="homeWelcome">WELCOME BACK</div><h1>Your FF Redditch</h1><div class="muted">Football · Fitness · Community</div></div>
@@ -646,10 +646,15 @@ function renderAdmin11s(){
   }
 
   const fixtures=[...currentAdmin11s.fixtures].sort((a,b)=>{
-    const aSort=Number(a.dateSort);
-    const bSort=Number(b.dateSort);
+    const aHasSort=a.dateSort!==null && a.dateSort!==undefined && a.dateSort!=='';
+    const bHasSort=b.dateSort!==null && b.dateSort!==undefined && b.dateSort!=='';
 
-    if(Number.isFinite(aSort)&&Number.isFinite(bSort)&&aSort!==bSort){
+    const aSort=aHasSort ? Number(a.dateSort) : Number.MAX_SAFE_INTEGER;
+    const bSort=bHasSort ? Number(b.dateSort) : Number.MAX_SAFE_INTEGER;
+
+    // Proper dated fixtures always come first, in chronological order.
+    // TBC / blank dates are deliberately pushed to the bottom.
+    if(aSort!==bSort){
       return aSort-bSort;
     }
 
