@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>FF Redditch App v0.8.4</title>
+<title>FF Redditch App v0.8.6</title>
 <style>
 :root{--bg:#0b0c0e;--card:#17191d;--card2:#22252b;--gold:#d8b33f;--text:#f5f5f3;--muted:#a7abb3;--green:#49cf7c;--red:#ef6066;--line:#2c3037}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;padding-bottom:92px}
@@ -52,7 +52,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 </style>
 </head>
 <body>
-<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.8.4 · 11s SQUAD + SUBS</div></header>
+<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.8.6 · WEIGH-IN INPUT FIX</div></header>
 <main>
 <section id="home" class="screen active">
 <div class="hero"><div class="eyebrow" id="homeWelcome">WELCOME BACK</div><h1>Your FF Redditch</h1><div class="muted">Football · Fitness · Community</div></div>
@@ -1495,7 +1495,7 @@ function setWinningTeam(team){
   renderTnfWeighIn();
 }
 
-function setWeighInValue(encodedEmail,field,value){
+function setWeighInValue(encodedEmail,field,value,renderNow=true){
   let email=encodedEmail;
   try{email=decodeURIComponent(encodedEmail);}catch(e){}
 
@@ -1510,10 +1510,15 @@ function setWeighInValue(encodedEmail,field,value){
   }else if(field==='weeklyWeight'){
     tnfWeighInDraft[email].weeklyWeight=value;
   }else if(field==='goals'){
-    tnfWeighInDraft[email].goals=Math.max(0,Number(value||0));
+    // Binary goal bonus: any goal = +1 FFP.
+    tnfWeighInDraft[email].goals=Number(value||0)>0 ? 1 : 0;
   }
 
-  renderTnfWeighIn();
+  // Do not rebuild the whole weigh-in card while the admin is typing weight.
+  // Re-render on blur/change instead so multi-digit and decimal weights type normally.
+  if(renderNow!==false){
+    renderTnfWeighIn();
+  }
 }
 
 function calcWeeklyFfp(player,draft){
@@ -1556,7 +1561,7 @@ function calcWeeklyFfp(player,draft){
       ? 1
       : 0;
 
-  const goalPoints=Math.max(0,Number(draft.goals||0));
+  const goalPoints=Number(draft.goals||0)>0 ? 1 : 0;
 
   return {
     weightPoints,
@@ -1644,22 +1649,24 @@ function renderTnfWeighIn(){
               min="1"
               value="${escapeHtml(draft.weeklyWeight??'')}"
               ${attended?'':'disabled'}
-              oninput="setWeighInValue('${encodeURIComponent(email)}','weeklyWeight',this.value)"
+              oninput="setWeighInValue('${encodeURIComponent(email)}','weeklyWeight',this.value,false)"
+              onchange="renderTnfWeighIn()"
               placeholder="kg"
               style="width:100%;margin-top:4px"
             >
           </label>
-          <label class="muted">
-            Goals
-            <input
-              type="number"
-              min="0"
-              step="1"
-              value="${Number(draft.goals||0)}"
-              ${attended?'':'disabled'}
-              oninput="setWeighInValue('${encodeURIComponent(email)}','goals',this.value)"
-              style="width:100%;margin-top:4px"
-            >
+          <label class="muted" style="display:flex;flex-direction:column;justify-content:flex-end">
+            Scored (+1 FFP)
+            <label class="toggle ${Number(draft.goals||0)>0?'on':''}" style="margin-top:4px;display:flex;align-items:center;justify-content:center;gap:7px;min-height:38px">
+              <input
+                type="checkbox"
+                ${Number(draft.goals||0)>0?'checked':''}
+                ${attended?'':'disabled'}
+                onchange="setWeighInValue('${encodeURIComponent(email)}','goals',this.checked?1:0)"
+                style="width:auto;margin:0"
+              >
+              ${Number(draft.goals||0)>0?'Scored ✓':'No goal'}
+            </label>
           </label>
         </div>
 
@@ -1672,7 +1679,7 @@ function renderTnfWeighIn(){
           <span class="muted">
             ${points.result}
             ${points.winnerPoints?' · Winner +1':''}
-            ${points.goalPoints?` · Goals +${points.goalPoints}`:''}
+            ${points.goalPoints?' · Scored +1':''}
           </span>
         </div>
       </div>
@@ -1704,7 +1711,7 @@ async function loadTnfWeighIn(){
           player.weeklyWeight!==undefined&&player.weeklyWeight!==null
             ? player.weeklyWeight
             : '',
-        goals:Number(player.goals||0)
+        goals:Number(player.goals||0)>0 ? 1 : 0
       };
     });
 
@@ -1755,7 +1762,7 @@ async function publishWeeklyResults(){
       email:player.email,
       attended:draft.attended!==false,
       weeklyWeight:draft.weeklyWeight,
-      goals:Number(draft.goals||0)
+      goals:Number(draft.goals||0)>0 ? 1 : 0
     };
   });
 
@@ -1789,7 +1796,7 @@ async function publishWeeklyResults(){
           player.weeklyWeight!==undefined&&player.weeklyWeight!==null
             ? player.weeklyWeight
             : '',
-        goals:Number(player.goals||0)
+        goals:Number(player.goals||0)>0 ? 1 : 0
       };
     });
 
