@@ -2,7 +2,6 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // Keep Cloudflare system endpoints working
     if (url.pathname.startsWith("/cdn-cgi/")) {
       return env.ASSETS.fetch(request);
     }
@@ -16,52 +15,28 @@ export default {
         }
       });
 
-    // ==========================================
-    // GET LOGGED-IN MEMBER EMAIL FROM CLOUDFLARE ACCESS
-    // ==========================================
     function getAccessEmail() {
-      const accessJwt =
-        request.headers.get("Cf-Access-Jwt-Assertion");
-
+      const accessJwt = request.headers.get("Cf-Access-Jwt-Assertion");
       if (!accessJwt) return "";
 
       try {
         const payloadPart = accessJwt.split(".")[1];
-
-        const base64 = payloadPart
-          .replace(/-/g, "+")
-          .replace(/_/g, "/");
-
-        const padded =
-          base64 +
-          "=".repeat((4 - (base64.length % 4)) % 4);
-
+        const base64 = payloadPart.replace(/-/g, "+").replace(/_/g, "/");
+        const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
         const payload = JSON.parse(atob(padded));
 
-        return String(
-          payload.email || payload.sub || ""
-        )
+        return String(payload.email || payload.sub || "")
           .trim()
           .toLowerCase();
-
       } catch (error) {
         return "";
       }
     }
 
-    // ==========================================
-    // CHECK BACKEND CONFIGURATION
-    // ==========================================
     function backendConfigured() {
-      return Boolean(
-        env.MEMBERS_API_URL &&
-        env.MEMBERS_API_SECRET
-      );
+      return Boolean(env.MEMBERS_API_URL && env.MEMBERS_API_SECRET);
     }
 
-    // ==========================================
-    // SEND REQUEST TO GOOGLE APPS SCRIPT
-    // ==========================================
     async function callMembersApi(payload) {
       if (!backendConfigured()) {
         return {
@@ -85,9 +60,7 @@ export default {
             },
             body: JSON.stringify({
               ...payload,
-              key: String(
-                env.MEMBERS_API_SECRET
-              ).trim()
+              key: String(env.MEMBERS_API_SECRET).trim()
             })
           }
         );
@@ -97,7 +70,6 @@ export default {
           status: response.status,
           body: await response.text()
         };
-
       } catch (error) {
         return {
           ok: false,
@@ -110,10 +82,6 @@ export default {
       }
     }
 
-    // ==========================================
-    // API: CURRENT MEMBER
-    // app-test.ffredditch.co.uk/api/me
-    // ==========================================
     if (
       url.pathname === "/api/me" ||
       url.pathname === "/api/me/"
@@ -127,8 +95,23 @@ export default {
         }, 401);
       }
 
+      const result = await callMembersApi({ email });
+
+      return new Response(result.body, {
+        status: result.status,
+        headers: {
+          "content-type": "application/json; charset=UTF-8",
+          "cache-control": "no-store"
+        }
+      });
+    }
+
+    if (
+      url.pathname === "/api/rankings" ||
+      url.pathname === "/api/rankings/"
+    ) {
       const result = await callMembersApi({
-        email: email
+        action: "rankings"
       });
 
       return new Response(result.body, {
@@ -140,10 +123,6 @@ export default {
       });
     }
 
-    // ==========================================
-    // API: NEXT TNF SESSION
-    // app-test.ffredditch.co.uk/api/tnf/next
-    // ==========================================
     if (
       url.pathname === "/api/tnf/next" ||
       url.pathname === "/api/tnf/next/"
@@ -159,7 +138,7 @@ export default {
 
       const result = await callMembersApi({
         action: "tnf_next_session",
-        email: email
+        email
       });
 
       return new Response(result.body, {
@@ -171,10 +150,6 @@ export default {
       });
     }
 
-    // ==========================================
-    // API: SAVE TNF AVAILABILITY
-    // app-test.ffredditch.co.uk/api/tnf/respond
-    // ==========================================
     if (
       url.pathname === "/api/tnf/respond" ||
       url.pathname === "/api/tnf/respond/"
@@ -206,15 +181,8 @@ export default {
         }, 400);
       }
 
-      const sessionId = String(
-        body.sessionId || ""
-      ).trim();
-
-      const response = String(
-        body.response || ""
-      )
-        .trim()
-        .toUpperCase();
+      const sessionId = String(body.sessionId || "").trim();
+      const response = String(body.response || "").trim().toUpperCase();
 
       if (!sessionId) {
         return json({
@@ -223,10 +191,7 @@ export default {
         }, 400);
       }
 
-      if (
-        response !== "IN" &&
-        response !== "OUT"
-      ) {
+      if (response !== "IN" && response !== "OUT") {
         return json({
           success: false,
           error: "Response must be IN or OUT"
@@ -235,9 +200,9 @@ export default {
 
       const result = await callMembersApi({
         action: "tnf_set_availability",
-        email: email,
-        sessionId: sessionId,
-        response: response
+        email,
+        sessionId,
+        response
       });
 
       return new Response(result.body, {
@@ -249,9 +214,6 @@ export default {
       });
     }
 
-    // ==========================================
-    // EVERYTHING ELSE = APP FILES
-    // ==========================================
     return env.ASSETS.fetch(request);
   }
 };
