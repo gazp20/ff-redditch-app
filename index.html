@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>FF Redditch App v0.8.6</title>
+<title>FF Redditch App v0.8.7</title>
 <style>
 :root{--bg:#0b0c0e;--card:#17191d;--card2:#22252b;--gold:#d8b33f;--text:#f5f5f3;--muted:#a7abb3;--green:#49cf7c;--red:#ef6066;--line:#2c3037}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;padding-bottom:92px}
@@ -49,10 +49,30 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 .admin-forecast-row{display:grid;grid-template-columns:1fr 54px 54px 54px;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
 .admin-forecast-row small{display:block;color:var(--muted);margin-top:3px}
 
+
+.home-tnf-status{
+  min-width:110px;
+  text-align:center;
+  padding:10px 14px;
+  border-radius:10px;
+  font-size:15px;
+  font-weight:1000;
+  letter-spacing:.4px;
+  border:1px solid var(--line);
+}
+.home-tnf-status.in{background:#153d27;color:#91f0b3;border-color:#2d7147}
+.home-tnf-status.out{background:#4b2024;color:#ff9aa0;border-color:#81353c}
+.home-tnf-status.none{background:#22252a;color:#d8dbe0}
+.tnf-live-label{font-size:13px;letter-spacing:.8px;font-weight:1000}
+.next-tnf-card{margin-top:12px}
+.next-tnf-card .choice{margin-top:10px}
+.week-control{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+@media(max-width:520px){.home-tnf-status{min-width:92px;font-size:14px;padding:9px 10px}.week-control{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
-<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.8.6 · WEIGH-IN INPUT FIX</div></header>
+<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.8.7 · TNF ROLLING WEEKS</div></header>
 <main>
 <section id="home" class="screen active">
 <div class="hero"><div class="eyebrow" id="homeWelcome">WELCOME BACK</div><h1>Your FF Redditch</h1><div class="muted">Football · Fitness · Community</div></div>
@@ -64,7 +84,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
       <h2 id="homeTnfTitle">Loading TNF…</h2>
       <div class="muted" id="homeTnfMeta">Checking next session</div>
     </div>
-    <span class="pill" id="homeTnfStatus">LOADING</span>
+    <span class="home-tnf-status none" id="homeTnfStatus">LOADING</span>
   </div>
 </div>
 
@@ -96,7 +116,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 
 <section id="tnf" class="screen">
 <div class="hero">
-  <div class="eyebrow">TNF · LIVE</div>
+  <div class="eyebrow tnf-live-label">TNF · LIVE</div>
   <h1 id="tnfDate">Loading…</h1>
   <div class="muted" id="tnfMeta">Loading session details</div>
   <div class="big"><span id="tnfInCount">—</span> / <span id="tnfCapacity">18</span></div>
@@ -108,6 +128,24 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
   <div id="tnfNotice" class="muted" style="margin-top:10px"></div>
 </div>
 <div class="card"><div class="row"><b>Your status</b><span class="pill" id="tnfMyStatus">LOADING</span></div></div>
+
+<div class="card next-tnf-card" id="nextTnfVoteCard" style="display:none">
+  <div class="eyebrow">NEXT TNF</div>
+  <div class="row">
+    <div>
+      <h2 id="nextTnfDate">Loading…</h2>
+      <div class="muted" id="nextTnfMeta">Loading next week's session</div>
+      <div class="muted" id="nextTnfSpaces" style="margin-top:3px"></div>
+    </div>
+    <span class="pill" id="nextTnfMyStatus">NO REPLY</span>
+  </div>
+  <div class="choice">
+    <button id="nextTnfInBtn" class="btn btn-green" onclick="saveTnfResponseFor('NEXT','IN')">✓ I'M IN</button>
+    <button id="nextTnfOutBtn" class="btn btn-red" onclick="saveTnfResponseFor('NEXT','OUT')">✕ I'M OUT</button>
+  </div>
+  <div id="nextTnfNotice" class="muted" style="margin-top:8px"></div>
+</div>
+
 <div class="card"><h3>SESSION</h3>
   <div class="listrow row"><span>Registration</span><b id="tnfRegistration">Loading…</b></div>
   <div class="listrow row"><span>Spaces remaining</span><b id="tnfRemaining">—</b></div>
@@ -207,10 +245,6 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
   <div id="published11SquadNames" style="margin-top:10px"></div>
 </div>
 
-<div class="card">
-  <div class="eyebrow">RECENT RESULT</div>
-  <div id="last11Result"><div class="muted">Loading latest result…</div></div>
-</div>
 </section>
 
 <section id="payments" class="screen">
@@ -308,6 +342,13 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
   <button class="btn btn-gold" style="width:100%;margin-top:12px" onclick="publishWeeklyResults()">
     PUBLISH WEEKLY RESULTS
   </button>
+  <div class="week-control">
+    <button class="btn btn-dark" onclick="resetTnfWeek()">↶ RESET WEEK</button>
+    <button class="btn btn-green" onclick="moveToNextTnfWeek()">MOVE TO NEXT WEEK →</button>
+  </div>
+  <div id="tnfWeekControlNotice" class="muted" style="font-size:11px;margin-top:8px">
+    Move only when this week's TNF is complete. Reset reopens the previously active week.
+  </div>
   <div id="tnfWeighInNotice" class="muted" style="font-size:11px;margin-top:8px">
     Publishing saves the full history to TNF Weekly Results and a simple Name / Weekly Weight / Weekly FF Points table to TNF Weekly Update.
   </div>
@@ -345,6 +386,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 
 let currentMember = null;
 let currentTnfSession = null;
+let nextTnfSession = null;
 let currentAdminTnf = null;
 let currentTnfWeighIn = null;
 let tnfWeighInDraft = {};
@@ -388,6 +430,14 @@ function setStatusPill(el,response){
   else if(r==='OUT'){el.textContent="I'M OUT";}
   else{el.textContent='NO RESPONSE';}
 }
+
+function setHomeTnfStatus(el,response){
+  if(!el) return;
+  const value=String(response||'').toUpperCase();
+  el.className='home-tnf-status '+(value==='IN'?'in':value==='OUT'?'out':'none');
+  el.textContent=value==='IN'?"✓ I'M IN":value==='OUT'?"✕ I'M OUT":"NO REPLY";
+}
+
 
 
 function memberName(){
@@ -1409,14 +1459,17 @@ async function resetTnfTeams(){
 async function loadTnf(){
   const inBtn=document.getElementById('tnfInBtn');
   const outBtn=document.getElementById('tnfOutBtn');
+
   try{
     const res=await fetch('/api/tnf/next',{cache:'no-store'});
     const data=await res.json();
     if(!res.ok||!data.success) throw new Error(data.error||'Could not load TNF');
-    if(!data.session) throw new Error('No open TNF session');
+    if(!data.session) throw new Error('No active TNF session');
 
     const s=data.session;
     currentTnfSession=s;
+    nextTnfSession=data.nextSession||null;
+
     const dateLabel=formatTnfDate(s.date);
     const count=Number(s.inCount||0);
     const capacity=Number(s.capacity||18);
@@ -1424,7 +1477,7 @@ async function loadTnf(){
 
     document.getElementById('homeTnfTitle').textContent=dateLabel+' · '+s.time;
     document.getElementById('homeTnfMeta').textContent=s.venue+' · '+count+'/'+capacity+' playing';
-    setStatusPill(document.getElementById('homeTnfStatus'),s.myResponse);
+    setHomeTnfStatus(document.getElementById('homeTnfStatus'),s.myResponse);
 
     document.getElementById('tnfDate').textContent=dateLabel;
     document.getElementById('tnfMeta').textContent=s.time+' · '+s.venue;
@@ -1438,44 +1491,136 @@ async function loadTnf(){
 
     inBtn.disabled=false;
     outBtn.disabled=false;
+
+    const nextCard=document.getElementById('nextTnfVoteCard');
+    if(nextTnfSession){
+      const n=nextTnfSession;
+      const nCapacity=Number(n.capacity||18);
+      const nCount=Number(n.inCount||0);
+      const nRemaining=Math.max(Number(n.spacesRemaining ?? (nCapacity-nCount)),0);
+      nextCard.style.display='';
+      document.getElementById('nextTnfDate').textContent=formatTnfDate(n.date);
+      document.getElementById('nextTnfMeta').textContent=n.time+' · '+n.venue+' · '+nCount+'/'+nCapacity+' playing';
+      document.getElementById('nextTnfSpaces').textContent=n.full?'Session full':nRemaining+' spaces remaining';
+      setStatusPill(document.getElementById('nextTnfMyStatus'),n.myResponse);
+    }else{
+      nextCard.style.display='none';
+    }
   }catch(e){
+    currentTnfSession=null;
+    nextTnfSession=null;
     document.getElementById('homeTnfTitle').textContent='Could not load TNF';
     document.getElementById('homeTnfMeta').textContent='Please refresh';
-    document.getElementById('homeTnfStatus').textContent='ERROR';
+    setHomeTnfStatus(document.getElementById('homeTnfStatus'),'');
     document.getElementById('tnfDate').textContent='Could not load TNF';
     document.getElementById('tnfMeta').textContent=e.message||'Please refresh';
     document.getElementById('tnfNotice').textContent=e.message||'Could not load TNF';
-    inBtn.disabled=true; outBtn.disabled=true;
+    document.getElementById('nextTnfVoteCard').style.display='none';
+    inBtn.disabled=true;
+    outBtn.disabled=true;
   }
 }
 
 async function saveTnfResponse(response){
-  if(!currentTnfSession||!currentTnfSession.id) return;
-  const inBtn=document.getElementById('tnfInBtn');
-  const outBtn=document.getElementById('tnfOutBtn');
-  inBtn.disabled=true; outBtn.disabled=true;
-  document.getElementById('tnfNotice').textContent='Saving…';
+  return saveTnfResponseFor('LIVE',response);
+}
+
+async function saveTnfResponseFor(which,response){
+  const isNext=String(which||'').toUpperCase()==='NEXT';
+  const session=isNext ? nextTnfSession : currentTnfSession;
+  if(!session||!session.id) return;
+
+  const inBtn=document.getElementById(isNext?'nextTnfInBtn':'tnfInBtn');
+  const outBtn=document.getElementById(isNext?'nextTnfOutBtn':'tnfOutBtn');
+  const notice=document.getElementById(isNext?'nextTnfNotice':'tnfNotice');
+
+  inBtn.disabled=true;
+  outBtn.disabled=true;
+  notice.textContent='Saving…';
+
   try{
     const res=await fetch('/api/tnf/respond',{
       method:'POST',
       headers:{'content-type':'application/json'},
-      body:JSON.stringify({sessionId:currentTnfSession.id,response})
+      body:JSON.stringify({sessionId:session.id,response})
     });
     const data=await res.json();
     if(!res.ok||!data.success) throw new Error(data.error||'Could not save response');
-    document.getElementById('tnfNotice').textContent=response==='IN'
-      ?"You're in for TNF ✓ Your previous team has been cleared and Admin can allocate you again."
-      :"You're marked as out for TNF. Any team allocation has been removed.";
+
+    notice.textContent=isNext
+      ? (response==='IN'?"You're in for next week's TNF ✓":"You're marked OUT for next week's TNF.")
+      : (response==='IN'
+          ?"You're in for TNF ✓ Your previous team has been cleared and Admin can allocate you again."
+          :"You're marked as out for TNF. Any team allocation has been removed.");
+
     await loadTnf();
-    await loadAdminTnf();
-    await loadTnfWeighIn();
+
+    // Only LIVE/current week feeds Admin.
+    if(!isNext){
+      await loadAdminTnf();
+      await loadTnfWeighIn();
+    }
   }catch(e){
-    document.getElementById('tnfNotice').textContent=e.message||'Could not save response';
+    notice.textContent=e.message||'Could not save response';
   }finally{
-    if(currentTnfSession){inBtn.disabled=false;outBtn.disabled=false;}
+    inBtn.disabled=false;
+    outBtn.disabled=false;
   }
 }
 
+async function moveToNextTnfWeek(){
+  const notice=document.getElementById('tnfWeekControlNotice');
+  if(!currentTnfSession||!currentTnfSession.id){
+    notice.textContent='No current TNF week found.';
+    return;
+  }
+  if(!nextTnfSession||!nextTnfSession.id){
+    notice.textContent='There is no later open TNF session to move to.';
+    return;
+  }
+  if(!confirm(`Move TNF from ${formatTnfDate(currentTnfSession.date)} to ${formatTnfDate(nextTnfSession.date)}?`)){
+    return;
+  }
+
+  notice.textContent='Moving to next week…';
+  try{
+    const res=await fetch('/api/tnf/week',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({action:'next'})
+    });
+    const data=await res.json();
+    if(!res.ok||!data.success) throw new Error(data.error||'Could not move to next week');
+
+    notice.textContent='Moved to next week ✓ Existing advance votes are now the LIVE week.';
+    await Promise.all([loadTnf(),loadAdminTnf(),loadTnfWeighIn()]);
+  }catch(e){
+    notice.textContent=e.message||'Could not move to next week.';
+  }
+}
+
+async function resetTnfWeek(){
+  const notice=document.getElementById('tnfWeekControlNotice');
+  if(!confirm('Reset to the previously active TNF week? Published weekly history will not be deleted.')){
+    return;
+  }
+
+  notice.textContent='Resetting week…';
+  try{
+    const res=await fetch('/api/tnf/week',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({action:'reset'})
+    });
+    const data=await res.json();
+    if(!res.ok||!data.success) throw new Error(data.error||'Could not reset week');
+
+    notice.textContent='Previous week restored ✓ You can edit and republish if required.';
+    await Promise.all([loadTnf(),loadAdminTnf(),loadTnfWeighIn()]);
+  }catch(e){
+    notice.textContent=e.message||'Could not reset week.';
+  }
+}
 
 
 function setWinningTeam(team){
