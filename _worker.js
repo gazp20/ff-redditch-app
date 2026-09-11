@@ -129,7 +129,46 @@ export default {
       url.pathname === "/api/fixtures/"
     ) {
       const result = await callMembersApi({
-        action: "fixtures"
+        action: "fixtures",
+        email
+      });
+
+      return new Response(result.body, {
+        status: result.status,
+        headers: {
+          "content-type": "application/json; charset=UTF-8",
+          "cache-control": "no-store"
+        }
+      });
+    }
+
+
+    if (
+      url.pathname === "/api/11s/respond" ||
+      url.pathname === "/api/11s/respond/"
+    ) {
+      if (request.method !== "POST") {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "Method not allowed"
+          }),
+          {
+            status: 405,
+            headers: {
+              "content-type": "application/json; charset=UTF-8"
+            }
+          }
+        );
+      }
+
+      const input = await request.json();
+
+      const result = await callMembersApi({
+        action: "11s_set_availability",
+        email,
+        fixtureId: input.fixtureId || "",
+        response: input.response || ""
       });
 
       return new Response(result.body, {
