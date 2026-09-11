@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>FF Redditch App v0.7.7</title>
+<title>FF Redditch App v0.7.8</title>
 <style>
 :root{--bg:#0b0c0e;--card:#17191d;--card2:#22252b;--gold:#d8b33f;--text:#f5f5f3;--muted:#a7abb3;--green:#49cf7c;--red:#ef6066;--line:#2c3037}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;padding-bottom:92px}
@@ -52,7 +52,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 </style>
 </head>
 <body>
-<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.7.7 · ADMIN LAYOUT + 11s</div></header>
+<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.7.8 · ADMIN LAYOUT FIX</div></header>
 <main>
 <section id="home" class="screen active">
 <div class="hero"><div class="eyebrow" id="homeWelcome">WELCOME BACK</div><h1>Your FF Redditch</h1><div class="muted">Football · Fitness · Community</div></div>
@@ -203,23 +203,64 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 
 <section id="payments" class="screen"><div class="hero"><div class="eyebrow">PAYMENTS</div><h1>£0.50 due</h1><div class="muted">TNF · 11s/Friendlies · Fines</div></div><div class="card"><div class="listrow row"><span>TNF · 8 Sept</span><b class="green">PAID £5</b></div><div class="listrow row"><span>11s · Wrexham</span><span class="muted">Awaiting selection</span></div><div class="listrow row"><span>Warm-up fine</span><b class="red">DUE £0.50</b></div><button class="btn btn-gold" style="width:100%;margin-top:12px">PAY £0.50</button></div><div class="card"><h3>PAYMENT HISTORY</h3><div class="listrow row"><span>TNF · 1 Sept</span><span class="green">£5 PAID</span></div></div></section>
 
-<section id="admin" class="screen"><div class="hero"><div class="eyebrow">ADMIN TEAM · 3 ACCOUNTS</div><h1>FF Redditch Control</h1>
+<section id="admin" class="screen">
+<div class="hero"><div class="eyebrow">ADMIN TEAM · 3 ACCOUNTS</div><h1>FF Redditch Control</h1>
     <div class="muted">Shared cover for TNF, 11s, weigh-ins, payments and club admin.</div>
     <div class="stack" style="margin-top:14px">
       <div class="row"><span>👑 Gaz Price</span><span class="pill paid">ADMIN</span></div>
       <div class="row"><span>⚙ Stu Lees</span><span class="pill paid">ADMIN</span></div>
       <div class="row"><span>🛡 Michael Sealey</span><span class="pill paid">ADMIN</span></div>
-    </div></div><div class="grid"><div class="card"><div class="muted">TNF IN</div><div class="big green" id="adminTopTnfIn">—</div></div><div class="card">
+    </div></div>
+
+<div class="card">
   <div class="eyebrow">TNF · TEAM BUILDER</div>
   <div class="row">
     <div>
       <h2 id="adminTnfTitle">Next TNF</h2>
       <div class="muted" id="adminTnfMeta">Loading players marked IN…</div>
-    </div><div class="card"><h3>TUESDAY WEIGH-IN</h3><div id="players"></div><div class="card">
+    </div>
+    <span class="pill" id="adminTnfPublishStatus">LOADING</span>
+  </div>
+
+  <div class="grid" style="margin-top:12px">
+    <div class="mini"><b id="adminTnfInCount">—</b><small>PLAYING</small></div>
+    <div class="mini"><b id="adminColoursCount">0</b><small>COLOURS</small></div>
+    <div class="mini"><b id="adminWhiteCount">0</b><small>WHITE</small></div>
+    <div class="mini"><b id="adminUnassignedCount">0</b><small>UNASSIGNED</small></div>
+  </div>
+
+  <div id="adminTnfPlayers" style="margin-top:12px">
+    <div class="muted">Loading TNF team builder…</div>
+  </div>
+
+  <div class="stack" style="margin-top:12px">
+    <button class="btn btn-dark" style="width:100%" onclick="saveTnfTeams(false)">SAVE DRAFT</button>
+    <button class="btn btn-gold" style="width:100%" onclick="saveTnfTeams(true)">PUBLISH TEAMS</button>
+    <button class="btn btn-dark" style="width:100%" onclick="resetTnfTeams()">RESET TEAMS</button>
+  </div>
+  <div id="adminTnfNotice" class="muted" style="font-size:11px;margin-top:8px">
+    Only players marked IN are included. You can edit and publish again at any time.
+  </div>
+</div>
+
+<div class="card"><h3>TUESDAY WEIGH-IN</h3><div id="players"></div><button class="btn btn-gold" style="width:100%;margin-top:12px" onclick="alert('Prototype only — nothing live changed.')">COMPLETE SESSION & CALCULATE POINTS</button></div>
+
+<div class="card">
 <div class="eyebrow">11s · AVAILABILITY FORECAST</div><h2>Upcoming Games</h2>
 <div class="muted">Live responses from active members marked as 11s Player = yes.</div>
 <div id="admin11TotalPlayers" class="muted" style="margin-top:6px">Loading 11s player count…</div>
-<div id="admin11Forecast"><div class="muted" style="padding:12px 0">Loading availability…</div></div><div class="card stack"><button class="btn btn-dark">Create / Edit TNF Session</button><button class="btn btn-dark" onclick="document.getElementById('adminTnfTitle').scrollIntoView({behavior:'smooth',block:'start'})">Allocate TNF Teams</button><button class="btn btn-dark">Add Fine</button><button class="btn btn-dark">11s Match Admin</button><button class="btn btn-dark">Payments & Outstanding</button></div></section>
+<div id="admin11Forecast"><div class="muted" style="padding:12px 0">Loading availability…</div></div>
+</div>
+
+<div class="grid">
+  <div class="card"><div class="muted">TNF IN</div><div class="big green" id="adminTopTnfIn">—</div></div>
+  <div class="card"><div class="muted">TEAMS</div><div class="big" id="adminTopTnfTeams">—</div></div>
+  <div class="card"><div class="muted">Collected</div><div class="big">£85</div></div>
+  <div class="card"><div class="muted">Owed</div><div class="big red">£15</div></div>
+</div>
+
+<div class="card stack"><button class="btn btn-dark">Create / Edit TNF Session</button><button class="btn btn-dark" onclick="document.getElementById('adminTnfTitle').scrollIntoView({behavior:'smooth',block:'start'})">Allocate TNF Teams</button><button class="btn btn-dark">Add Fine</button><button class="btn btn-dark">11s Match Admin</button><button class="btn btn-dark">Payments & Outstanding</button></div>
+</section>
 
 <section id="more" class="screen"><div class="hero"><div class="eyebrow">MORE</div><h1>Club Hub</h1></div><div class="card stack"><button class="btn btn-dark">🍽 Matchday Fuel</button><button class="btn btn-dark">📖 FFR Rule Book</button><button class="btn btn-dark">📰 Club News</button><button class="btn btn-dark">👕 Kit Bag</button><button class="btn btn-dark">👤 Account</button></div></section>
 </main>
@@ -531,11 +572,9 @@ function adminFixtureDateValue(value){
   const s=String(value||'').trim();
   if(!s) return Number.MAX_SAFE_INTEGER;
 
-  // ISO / browser-readable date
   const direct=Date.parse(s);
   if(!Number.isNaN(direct)) return direct;
 
-  // UK sheet format: dd/mm/yyyy
   const uk=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
   if(uk){
     return new Date(
@@ -563,8 +602,8 @@ function renderAdmin11s(){
   }
 
   const fixtures=[...currentAdmin11s.fixtures].sort((a,b)=>{
-    const diff=adminFixtureDateValue(a.date)-adminFixtureDateValue(b.date);
-    if(diff!==0) return diff;
+    const dateDiff=adminFixtureDateValue(a.date)-adminFixtureDateValue(b.date);
+    if(dateDiff!==0) return dateDiff;
     return String(a.ko||'').localeCompare(String(b.ko||''));
   });
 
@@ -609,7 +648,7 @@ function renderAdmin11s(){
 
   const toggle=fixtures.length>2
     ? `<button class="btn btn-dark" style="width:100%;margin-top:10px" onclick="toggleAdmin11FixtureList()">
-        ${showAllAdmin11Fixtures?'SHOW NEXT 2 ONLY ↑':'SHOW ALL FIXTURES ↓'}
+         ${showAllAdmin11Fixtures?'SHOW NEXT 2 ONLY ↑':'SHOW ALL FIXTURES ↓'}
        </button>`
     : '';
 
