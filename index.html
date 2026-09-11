@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>FF Redditch App v0.7.8</title>
+<title>FF Redditch App v0.7.9</title>
 <style>
 :root{--bg:#0b0c0e;--card:#17191d;--card2:#22252b;--gold:#d8b33f;--text:#f5f5f3;--muted:#a7abb3;--green:#49cf7c;--red:#ef6066;--line:#2c3037}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;padding-bottom:92px}
@@ -52,7 +52,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 </style>
 </head>
 <body>
-<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.7.8 · ADMIN LAYOUT FIX</div></header>
+<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.7.9 · 11s DATE ORDER FIX</div></header>
 <main>
 <section id="home" class="screen active">
 <div class="hero"><div class="eyebrow" id="homeWelcome">WELCOME BACK</div><h1>Your FF Redditch</h1><div class="muted">Football · Fitness · Community</div></div>
@@ -572,9 +572,8 @@ function adminFixtureDateValue(value){
   const s=String(value||'').trim();
   if(!s) return Number.MAX_SAFE_INTEGER;
 
-  const direct=Date.parse(s);
-  if(!Number.isNaN(direct)) return direct;
-
+  // Fixtures from Google Sheets are returned as UK dates: dd/mm/yyyy.
+  // Parse that FIRST so dates like 04/10/2026 are not read as April 10.
   const uk=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
   if(uk){
     return new Date(
@@ -583,6 +582,9 @@ function adminFixtureDateValue(value){
       Number(uk[1])
     ).getTime();
   }
+
+  const direct=Date.parse(s);
+  if(!Number.isNaN(direct)) return direct;
 
   return Number.MAX_SAFE_INTEGER;
 }
