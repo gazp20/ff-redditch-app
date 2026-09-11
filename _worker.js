@@ -128,6 +128,15 @@ export default {
       url.pathname === "/api/fixtures" ||
       url.pathname === "/api/fixtures/"
     ) {
+      const email = getAccessEmail();
+
+      if (!email) {
+        return json({
+          success: false,
+          error: "Authenticated member email not found"
+        }, 401);
+      }
+
       const result = await callMembersApi({
         action: "fixtures",
         email
@@ -147,6 +156,15 @@ export default {
       url.pathname === "/api/11s/respond" ||
       url.pathname === "/api/11s/respond/"
     ) {
+      const email = getAccessEmail();
+
+      if (!email) {
+        return json({
+          success: false,
+          error: "Authenticated member email not found"
+        }, 401);
+      }
+
       if (request.method !== "POST") {
         return new Response(
           JSON.stringify({
