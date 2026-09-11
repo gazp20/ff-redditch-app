@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>FF Redditch App v0.6.1</title>
+<title>FF Redditch App v0.7.0</title>
 <style>
 :root{--bg:#0b0c0e;--card:#17191d;--card2:#22252b;--gold:#d8b33f;--text:#f5f5f3;--muted:#a7abb3;--green:#49cf7c;--red:#ef6066;--line:#2c3037}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;padding-bottom:92px}
@@ -25,11 +25,14 @@ input{width:76px;background:#0e0f11;border:1px solid #3c4047;color:#fff;border-r
 .adminrow{display:grid;grid-template-columns:1fr auto;gap:8px;padding:11px 0;border-bottom:1px solid var(--line)}
 nav{position:fixed;bottom:0;left:0;right:0;z-index:6;background:#111215;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(7,1fr);padding-bottom:env(safe-area-inset-bottom)}
 nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:9px}.navicon{font-size:18px;display:block;margin-bottom:3px}nav button.active{color:var(--gold)}
-@media(max-width:480px){main{padding:11px}.stats5{gap:4px}.mini{padding:9px 2px}.mini b{font-size:17px}}
+.chart-wrap{background:#101114;border:1px solid var(--line);border-radius:14px;padding:10px;margin-top:8px}
+#ffrChart{width:100%;height:190px;display:block}
+.empty{color:var(--muted);padding:12px 0;text-align:center}
+@media(max-width:480px){main{padding:11px}.stats5{gap:4px}.mini{padding:9px 2px}.mini b{font-size:17px}#ffrChart{height:165px}}
 </style>
 </head>
 <body>
-<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.6.1 · HOME LIVE</div></header>
+<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.7.0 · LIVE FFR</div></header>
 <main>
 <section id="home" class="screen active">
 <div class="hero"><div class="eyebrow" id="homeWelcome">WELCOME BACK</div><h1>Your FF Redditch</h1><div class="muted">Football · Fitness · Community</div></div>
@@ -70,10 +73,49 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 </div>
 </section>
 
-<section id="ffr" class="screen"><div class="hero"><div class="eyebrow">FFR</div><h1>League & Journey</h1></div><div class="grid"><div class="card"><div class="muted">FF Points</div><div class="big gold">42</div></div><div class="card"><div class="muted">Position</div><div class="big">#6</div></div></div><div class="card"><h3>MY WEIGHT JOURNEY</h3><div style="height:130px;display:flex;align-items:end;gap:8px"><div style="height:95%;flex:1;background:#353941"></div><div style="height:86%;flex:1;background:#353941"></div><div style="height:78%;flex:1;background:#353941"></div><div style="height:69%;flex:1;background:#353941"></div><div style="height:60%;flex:1;background:#d8b33f"></div></div><div class="row muted"><small>Week 1</small><small>Latest</small></div></div>
-<div class="card"><h3>FFR LEAGUE TABLE</h3><table><tr><th>#</th><th>Player</th><th>Pts</th></tr><tr><td>1</td><td>Dan Bowen</td><td>55</td></tr><tr><td>2</td><td>Mark Sanders</td><td>51</td></tr><tr><td>3</td><td>Kem Nedjat</td><td>48</td></tr><tr><td>6</td><td><b>You</b></td><td class="gold">42</td></tr></table></div>
-<div class="card"><h3>MOST WEIGHT LOST</h3><table><tr><th>#</th><th>Player</th><th>% Lost</th></tr><tr><td>1</td><td>Dan Bowen</td><td>6.2%</td></tr><tr><td>2</td><td>Mark Sanders</td><td>5.4%</td></tr><tr><td>3</td><td>Craig Wood</td><td>4.8%</td></tr></table></div>
-<div class="card"><div class="eyebrow">TEAM OF THE WEEK</div><h2>Top 5 this week</h2><div class="listrow row"><b>Dan Bowen</b><span class="pill">7 pts</span></div><div class="listrow row"><span>Mark Sanders</span><span class="pill">6 pts</span></div><div class="listrow row"><span>Kem Nedjat</span><span class="pill">5 pts</span></div><div class="listrow row"><span>Craig Wood</span><span class="pill">4 pts</span></div><div class="listrow row"><span>Ryan Sproston</span><span class="pill">4 pts</span></div></div><div class="card"><h3>RECENT POINTS</h3><div class="listrow row"><span>Weight loss</span><b class="green">+2</b></div><div class="listrow row"><span>Winning TNF team</span><b class="green">+1</b></div><div class="listrow row"><span>Goal</span><b class="green">+1</b></div></div></section>
+<section id="ffr" class="screen">
+<div class="hero"><div class="eyebrow">FFR · LIVE</div><h1>League & Journey</h1><div class="muted">Your live FF Redditch progress</div></div>
+
+<div class="grid">
+  <div class="card"><div class="muted">FF Points</div><div class="big gold" id="ffrPoints">—</div></div>
+  <div class="card"><div class="muted">Position</div><div class="big" id="ffrPosition">—</div><small class="muted" id="ffrPositionMeta"></small></div>
+</div>
+
+<div class="card">
+  <h3>MY WEIGHT JOURNEY</h3>
+  <div class="chart-wrap">
+    <svg id="ffrChart" viewBox="0 0 760 220" preserveAspectRatio="none"></svg>
+  </div>
+  <div class="row muted" style="margin-top:8px"><small id="ffrJourneyStart">—</small><small id="ffrJourneyLatest">—</small></div>
+</div>
+
+<div class="card">
+  <h3>FFR LEAGUE TABLE</h3>
+  <table>
+    <thead><tr><th>#</th><th>Player</th><th>Pts</th></tr></thead>
+    <tbody id="ffrLeagueBody"><tr><td colspan="3" class="muted">Loading…</td></tr></tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h3>MOST WEIGHT LOST</h3>
+  <table>
+    <thead><tr><th>#</th><th>Player</th><th>% Lost</th><th>kg</th></tr></thead>
+    <tbody id="ffrWeightBody"><tr><td colspan="4" class="muted">Loading…</td></tr></tbody>
+  </table>
+</div>
+
+<div class="card">
+  <div class="eyebrow">TEAM OF THE WEEK</div>
+  <h2>Top 5 this week</h2>
+  <div id="ffrTeamWeek"><div class="muted">Loading…</div></div>
+</div>
+
+<div class="card">
+  <h3>RECENT POINTS</h3>
+  <div class="empty">Recent point-by-point history will appear here when we connect the scoring log.</div>
+</div>
+</section>
 
 <section id="elevens" class="screen">
 <div class="hero">
@@ -164,6 +206,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 
 let currentMember = null;
 let currentTnfSession = null;
+let currentRankings = [];
 
 function go(id){
   document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
@@ -190,6 +233,122 @@ function setStatusPill(el,response){
   else{el.textContent='NO RESPONSE';}
 }
 
+
+function memberName(){
+  return String((currentMember && (currentMember['Name'] || currentMember['First Name'])) || '').trim();
+}
+
+function getWeekHistory(){
+  if(!currentMember) return [];
+  const items=[];
+  for(let i=1;i<=10;i++){
+    const raw=currentMember['week '+i];
+    if(raw!=='' && raw!==null && raw!==undefined){
+      const n=Number(raw);
+      if(Number.isFinite(n) && n>0) items.push({label:'Week '+i,weight:n});
+    }
+  }
+  return items;
+}
+
+function drawFfrChart(items){
+  const svg=document.getElementById('ffrChart');
+  if(!svg) return;
+  if(!items.length){
+    svg.innerHTML='<text x="380" y="112" text-anchor="middle" font-size="20" fill="#8f949d">Weekly weigh-ins will appear here</text>';
+    return;
+  }
+
+  const W=760,H=220,pad=34;
+  const vals=items.map(x=>x.weight);
+  const min=Math.min(...vals)-1.5;
+  const max=Math.max(...vals)+1.5;
+  const x=i=>pad+i*((W-pad*2)/(Math.max(1,items.length-1)));
+  const y=v=>pad+(max-v)*((H-pad*2)/(max-min || 1));
+
+  const grid=[0,.25,.5,.75,1].map(t=>{
+    const gy=pad+t*(H-pad*2);
+    const v=(max-t*(max-min)).toFixed(0);
+    return `<line x1="${pad}" y1="${gy}" x2="${W-pad}" y2="${gy}" stroke="#2c3037" stroke-width="1"/><text x="3" y="${gy+4}" font-size="12" fill="#8f949d">${v}</text>`;
+  }).join('');
+
+  const pts=items.map((d,i)=>`${x(i)},${y(d.weight)}`).join(' ');
+  const dots=items.map((d,i)=>`<circle cx="${x(i)}" cy="${y(d.weight)}" r="5" fill="#d8b33f"/>`).join('');
+  svg.innerHTML=grid+`<polyline points="${pts}" fill="none" stroke="#d8b33f" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>`+dots;
+}
+
+function renderFfr(){
+  if(!currentMember) return;
+
+  const totalPoints=Number(currentMember['FF Total points']||0);
+  document.getElementById('ffrPoints').textContent=totalPoints;
+
+  const sorted=[...currentRankings].sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0));
+  const myName=memberName().toLowerCase();
+  const pos=sorted.findIndex(p=>String(p.name||'').trim().toLowerCase()===myName);
+  document.getElementById('ffrPosition').textContent=pos>=0?'#'+(pos+1):'—';
+  document.getElementById('ffrPositionMeta').textContent=sorted.length?'Out of '+sorted.length:'';
+
+  const history=getWeekHistory();
+  drawFfrChart(history);
+  if(history.length){
+    document.getElementById('ffrJourneyStart').textContent=history[0].label+' · '+history[0].weight.toFixed(1)+' kg';
+    const last=history[history.length-1];
+    document.getElementById('ffrJourneyLatest').textContent=last.label+' · '+last.weight.toFixed(1)+' kg';
+  }else{
+    document.getElementById('ffrJourneyStart').textContent='No weigh-ins yet';
+    document.getElementById('ffrJourneyLatest').textContent='';
+  }
+
+  const leagueBody=document.getElementById('ffrLeagueBody');
+  if(leagueBody){
+    if(!sorted.length){
+      leagueBody.innerHTML='<tr><td colspan="3" class="muted">No live rankings available.</td></tr>';
+    }else{
+      leagueBody.innerHTML=sorted.map((p,i)=>{
+        const isMe=String(p.name||'').trim().toLowerCase()===myName;
+        return `<tr><td>${i+1}</td><td>${isMe?'<b>'+p.name+' (You)</b>':p.name}</td><td class="${isMe?'gold':''}">${Number(p.totalPoints||0)}</td></tr>`;
+      }).join('');
+    }
+  }
+
+  const weightBody=document.getElementById('ffrWeightBody');
+  if(weightBody){
+    const weightRows=[...currentRankings]
+      .filter(p=>Number(p.percentLost)>0 || Number(p.totalKgLost)>0)
+      .sort((a,b)=>Number(b.percentLost||0)-Number(a.percentLost||0));
+    weightBody.innerHTML=weightRows.length ? weightRows.map((p,i)=>{
+      const isMe=String(p.name||'').trim().toLowerCase()===myName;
+      return `<tr><td>${i+1}</td><td>${isMe?'<b>'+p.name+' (You)</b>':p.name}</td><td class="${isMe?'gold':''}">${Number(p.percentLost||0).toFixed(1)}%</td><td>${Number(p.totalKgLost||0).toFixed(1)}</td></tr>`;
+    }).join('') : '<tr><td colspan="4" class="muted">No live weight-loss rankings available.</td></tr>';
+  }
+
+  const teamEl=document.getElementById('ffrTeamWeek');
+  if(teamEl){
+    const team=[...currentRankings]
+      .filter(p=>Number(p.weeklyPoints)>0)
+      .sort((a,b)=>Number(b.weeklyPoints||0)-Number(a.weeklyPoints||0))
+      .slice(0,5);
+    teamEl.innerHTML=team.length ? team.map((p,i)=>`
+      <div class="listrow row">
+        <span>${i===0?'<b>'+p.name+'</b>':p.name}</span>
+        <span class="pill">${Number(p.weeklyPoints||0)} pts</span>
+      </div>`).join('') : '<div class="muted">Team of the Week will appear once weekly FF Points are available.</div>';
+  }
+}
+
+async function loadRankings(){
+  try{
+    const res=await fetch('/api/rankings',{cache:'no-store'});
+    const data=await res.json();
+    if(!res.ok||!data.success||!Array.isArray(data.members)) throw new Error(data.error||'Could not load rankings');
+    currentRankings=data.members;
+  }catch(e){
+    currentRankings=[];
+  }
+  renderFfr();
+}
+
 async function loadMember(){
   try{
     const res=await fetch('/api/me',{cache:'no-store'});
@@ -205,6 +364,7 @@ async function loadMember(){
     document.getElementById('homeFfPoints').textContent=ffPoints;
     document.getElementById('homeStreak').textContent=streak+' 🔥';
     document.getElementById('homeAttendance').textContent=Math.round(attendance)+'%';
+    renderFfr();
   }catch(e){
     document.getElementById('homeWelcome').textContent='WELCOME BACK';
   }
