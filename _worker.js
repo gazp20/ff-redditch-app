@@ -125,6 +125,15 @@ export default {
 
 
     if (
+      url.pathname === "/api/club-news" ||
+      url.pathname === "/api/club-news/"
+    ) {
+      const result=await callMembersApi({action:"club_news"});
+      return new Response(result.body,{status:result.status,headers:{"content-type":"application/json; charset=UTF-8","cache-control":"no-store"}});
+    }
+
+
+    if (
       url.pathname === "/api/fixtures" ||
       url.pathname === "/api/fixtures/"
     ) {
@@ -216,8 +225,9 @@ export default {
         action: "11s_save_squad",
         email,
         fixtureId: input.fixtureId || "",
-        selectedEmails: Array.isArray(input.selectedEmails) ? input.selectedEmails : [],
-        published: input.published === true
+        selectedEmails:Array.isArray(input.selectedEmails)?input.selectedEmails:[],
+        reserveEmails:Array.isArray(input.reserveEmails)?input.reserveEmails:[],
+        published:input.published===true
       });
 
       return new Response(result.body, {
