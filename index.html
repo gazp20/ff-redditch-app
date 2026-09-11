@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>FF Redditch App v0.8.10</title>
+<title>FF Redditch App v0.8.11</title>
 <style>
 :root{--bg:#0b0c0e;--card:#17191d;--card2:#22252b;--gold:#d8b33f;--text:#f5f5f3;--muted:#a7abb3;--green:#49cf7c;--red:#ef6066;--line:#2c3037}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;padding-bottom:92px}
@@ -72,7 +72,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 </style>
 </head>
 <body>
-<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.8.10 · 11s HOME STATUS FIX</div></header>
+<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.8.11 · FOOTBALL SIDE FINAL</div></header>
 <main>
 <section id="home" class="screen active">
 <div class="hero"><div class="eyebrow" id="homeWelcome">WELCOME BACK</div><h1>Your FF Redditch</h1><div class="muted">Football · Fitness · Community</div></div>
@@ -379,7 +379,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 <button data-s="ffr" onclick="go('ffr')"><span class="navicon">🏆</span>FFR</button>
 <button id="navElevens" data-s="elevens" onclick="go('elevens')"><span class="navicon">11</span>11s</button>
 <button data-s="payments" onclick="go('payments')"><span class="navicon">£</span>Payments</button>
-<button data-s="admin" onclick="go('admin')"><span class="navicon">⚙</span>Admin</button>
+<button id="navAdmin" data-s="admin" onclick="go('admin')"><span class="navicon">⚙</span>Admin</button>
 <button data-s="more" onclick="go('more')"><span class="navicon">☰</span>More</button>
 </nav>
 <script>
@@ -404,9 +404,8 @@ let showFullFfrLeague = false;
 let showFullFfrWeight = false;
 
 function go(id){
-  if(id==='elevens' && currentMember && !is11sPlayer()){
-    id='home';
-  }
+  if(id==='elevens' && currentMember && !is11sPlayer()) id='home';
+  if(id==='admin' && currentMember && !isAdminMember()) id='home';
   document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
   const screen=document.getElementById(id);
   if(screen) screen.classList.add('active');
@@ -582,52 +581,32 @@ function renderPublished11Squad(){
     `${formatAppDate(fixture.date)} · ${fixture.ko||'TBC'} · ${fixture.competition||'11s'}`;
 
   const status=document.getElementById('published11MyStatus');
-  if(fixture.squadSelected){
-    status.textContent='SELECTED ✓';
-    status.className='pill paid';
-  }else{
-    status.textContent='SQUAD PUBLISHED';
-    status.className='pill';
-  }
+  if(fixture.squadSelected){status.textContent='SELECTED ✓';status.className='pill paid';}
+  else if(fixture.squadReserve){status.textContent='RESERVE';status.className='pill';}
+  else{status.textContent='SQUAD PUBLISHED';status.className='pill';}
 
   const names=Array.isArray(fixture.squadNames)?fixture.squadNames:[];
-
+  const reserves=Array.isArray(fixture.reserveNames)?fixture.reserveNames:[];
   document.getElementById('published11SquadNames').innerHTML=
-    names.length
-      ? names.map((name,i)=>`<div class="listrow row"><span>${i+1}. ${escapeHtml(name)}</span></div>`).join('')
-      : '<div class="muted">No players listed.</div>';
+    `<div class="eyebrow" style="margin-bottom:5px">SELECTED</div>`+
+    (names.length?names.map((name,i)=>`<div class="listrow row"><span>${i+1}. ${escapeHtml(name)}</span></div>`).join(''):'<div class="muted">No selected players.</div>')+
+    `<div class="eyebrow" style="margin:12px 0 5px">RESERVES</div>`+
+    (reserves.length?reserves.map(name=>`<div class="listrow row"><span>${escapeHtml(name)}</span></div>`).join(''):'<div class="muted">No reserves.</div>');
 }
 
 function getAdminSquadDraft(fixture){
   const id=fixture.fixtureId;
-
-  if(!Array.isArray(admin11SquadDrafts[id])){
-    admin11SquadDrafts[id]=Array.isArray(fixture.selectedEmails)
-      ? [...fixture.selectedEmails]
-      : [];
+  if(!admin11SquadDrafts[id]||Array.isArray(admin11SquadDrafts[id])){
+    admin11SquadDrafts[id]={selected:Array.isArray(fixture.selectedEmails)?[...fixture.selectedEmails]:[],reserves:Array.isArray(fixture.reserveEmails)?[...fixture.reserveEmails]:[]};
   }
-
   return admin11SquadDrafts[id];
 }
-
-function toggle11SquadPlayer(encodedFixtureId,encodedEmail){
-  const fixtureId=decodeURIComponent(encodedFixtureId);
-  const email=decodeURIComponent(encodedEmail).toLowerCase();
-  const fixture=(currentAdmin11s&&Array.isArray(currentAdmin11s.fixtures))
-    ? currentAdmin11s.fixtures.find(f=>f.fixtureId===fixtureId)
-    : null;
-
-  if(!fixture) return;
-
+function set11SquadPlayerRole(encodedFixtureId,encodedEmail,role){
+  const fixtureId=decodeURIComponent(encodedFixtureId),email=decodeURIComponent(encodedEmail).toLowerCase();
+  const fixture=currentAdmin11s?.fixtures?.find(f=>f.fixtureId===fixtureId);if(!fixture)return;
   const draft=getAdminSquadDraft(fixture);
-  const index=draft.indexOf(email);
-
-  if(index>=0){
-    draft.splice(index,1);
-  }else{
-    draft.push(email);
-  }
-
+  draft.selected=draft.selected.filter(e=>e!==email);draft.reserves=draft.reserves.filter(e=>e!==email);
+  if(role==='SELECTED')draft.selected.push(email);if(role==='RESERVE')draft.reserves.push(email);
   renderAdmin11s();
 }
 
@@ -639,7 +618,9 @@ async function save11Squad(encodedFixtureId,published){
 
   if(!fixture) return;
 
-  const selectedEmails=getAdminSquadDraft(fixture);
+  const draft=getAdminSquadDraft(fixture);
+  const selectedEmails=draft.selected;
+  const reserveEmails=draft.reserves;
   const notice=document.getElementById('admin11SquadNotice-'+CSS.escape(fixtureId));
 
   if(published && !selectedEmails.length){
@@ -656,6 +637,7 @@ async function save11Squad(encodedFixtureId,published){
       body:JSON.stringify({
         fixtureId,
         selectedEmails,
+        reserveEmails,
         published:published===true
       })
     });
@@ -676,7 +658,7 @@ async function save11Squad(encodedFixtureId,published){
 
     if(notice){
       notice.textContent=published
-        ? 'Squad published ✓ £6 subs created for selected players.'
+        ? 'Squad published ✓ £6 subs created for Selected players only.'
         : 'Squad draft saved ✓';
     }
   }catch(e){
@@ -946,19 +928,20 @@ function renderAdmin11s(){
   const rows=visible.map(f=>{
     const open=openAdminFixtureId===f.fixtureId;
     const draft=getAdminSquadDraft(f);
+    const selectedDraft=draft.selected;
+    const reserveDraft=draft.reserves;
     const availablePlayers=Array.isArray(f.availablePlayers)?f.availablePlayers:[];
     const published=f.squadPublished===true;
 
     const selector=availablePlayers.length
       ? availablePlayers.map(player=>{
           const email=String(player.email||'').toLowerCase();
-          const selected=draft.includes(email);
-
-          return `<button
-            class="toggle ${selected?'on':''}"
-            style="margin:3px"
-            onclick="toggle11SquadPlayer('${encodeURIComponent(f.fixtureId)}','${encodeURIComponent(email)}')"
-          >${selected?'✓ ':''}${escapeHtml(player.name)}</button>`;
+          const selected=selectedDraft.includes(email), reserve=reserveDraft.includes(email);
+          return `<div class="listrow" style="padding:7px 0"><b>${escapeHtml(player.name)}</b>
+            <div class="row" style="gap:6px;margin-top:6px">
+              <button class="toggle ${selected?'on':''}" style="flex:1" onclick="set11SquadPlayerRole('${encodeURIComponent(f.fixtureId)}','${encodeURIComponent(email)}','${selected?'NONE':'SELECTED'}')">${selected?'✓ SELECTED':'SELECT'}</button>
+              <button class="toggle ${reserve?'on':''}" style="flex:1" onclick="set11SquadPlayerRole('${encodeURIComponent(f.fixtureId)}','${encodeURIComponent(email)}','${reserve?'NONE':'RESERVE'}')">${reserve?'✓ RESERVE':'RESERVE'}</button>
+            </div></div>`;
         }).join('')
       : '<div class="muted">No players currently marked available.</div>';
 
@@ -977,7 +960,7 @@ function renderAdmin11s(){
           <div class="mini"><b>${Number(f.noReplyCount||0)}</b><small>NO REPLY</small></div>
         </div>
         <div class="muted" style="margin-top:8px">
-          Squad: ${draft.length} selected · ${published?'PUBLISHED':'DRAFT'}
+          Squad: ${selectedDraft.length} selected · ${reserveDraft.length} reserve · ${published?'PUBLISHED':'DRAFT'}
         </div>
       </button>
 
@@ -989,7 +972,7 @@ function renderAdmin11s(){
         <div class="listrow">
           <b>⚽ Select squad</b>
           <div class="muted" style="margin-top:4px">
-            Only players marked Available can be selected.
+            Only players marked Available can be Selected or Reserve.
           </div>
           <div style="margin-top:8px">${selector}</div>
 
@@ -1003,7 +986,7 @@ function renderAdmin11s(){
           </div>
 
           <div id="admin11SquadNotice-${escapeHtml(f.fixtureId)}" class="muted" style="margin-top:7px">
-            ${published?'Published squad creates £6 match subs for each selected player.':'Publishing will post the squad to the 11s page and create £6 subs.'}
+            ${published?'Published squad creates £6 match subs for Selected players only.':'Publishing posts Selected + Reserve. £6 subs are created for Selected players only.'}
           </div>
         </div>
       </div>`:''}
@@ -1031,10 +1014,8 @@ async function loadAdmin11s(){
     currentAdmin11s=data;
 
     (Array.isArray(data.fixtures)?data.fixtures:[]).forEach(f=>{
-      if(!Array.isArray(admin11SquadDrafts[f.fixtureId])){
-        admin11SquadDrafts[f.fixtureId]=Array.isArray(f.selectedEmails)
-          ? [...f.selectedEmails]
-          : [];
+      if(!admin11SquadDrafts[f.fixtureId]||Array.isArray(admin11SquadDrafts[f.fixtureId])){
+        admin11SquadDrafts[f.fixtureId]={selected:Array.isArray(f.selectedEmails)?[...f.selectedEmails]:[],reserves:Array.isArray(f.reserveEmails)?[...f.reserveEmails]:[]};
       }
     });
   }catch(e){
@@ -1048,29 +1029,20 @@ function renderHomeFfr(){
   const sorted=[...currentRankings].sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0));
   const myName=memberName().toLowerCase();
   const pos=sorted.findIndex(p=>String(p.name||'').trim().toLowerCase()===myName);
-
-  const rank=document.getElementById('homeRank');
-  const rankMeta=document.getElementById('homeRankMeta');
+  const rank=document.getElementById('homeRank'), rankMeta=document.getElementById('homeRankMeta');
   if(rank) rank.textContent=pos>=0?'#'+(pos+1):'—';
   if(rankMeta) rankMeta.textContent=sorted.length?'of '+sorted.length:'';
-
-  const newsTitle=document.getElementById('homeNewsTitle');
-  const newsMeta=document.getElementById('homeNewsMeta');
-  const leader=sorted[0]||null;
-  const fiveClub=[...currentRankings]
-    .filter(p=>Number(p.percentLost||0)>=5)
-    .sort((a,b)=>Number(b.percentLost||0)-Number(a.percentLost||0));
-
-  if(newsTitle){
-    newsTitle.textContent=leader
-      ? `FFR leader: ${leader.name} · ${Number(leader.totalPoints||0)} pts`
-      : 'FFR rankings loading…';
-  }
-  if(newsMeta){
-    newsMeta.textContent=fiveClub.length
-      ? '5% Club: '+fiveClub.map(p=>p.name).join(', ')
-      : 'The 5% Club is waiting for its next member.';
-  }
+}
+async function loadClubNews(){
+  const title=document.getElementById('homeNewsTitle'), meta=document.getElementById('homeNewsMeta');
+  try{
+    const res=await fetch('/api/club-news',{cache:'no-store'}), data=await res.json();
+    if(!res.ok||!data.success) throw new Error(data.error||'Could not load club news');
+    const item=data.item;
+    if(!item){if(title)title.textContent='No club update';if(meta)meta.textContent='Check back soon.';return;}
+    if(title) title.textContent=item.headline||'Club update';
+    if(meta) meta.textContent=(item.date?formatAppDate(item.date)+' · ':'')+(item.text||'');
+  }catch(e){if(title)title.textContent='Club News';if(meta)meta.textContent='Latest update unavailable.';}
 }
 
 function toggleFfrLeague(){showFullFfrLeague=!showFullFfrLeague;renderFfr();}
@@ -1174,6 +1146,20 @@ function is11sPlayer(){
   return ['yes','y','true','1'].includes(raw);
 }
 
+function isAdminMember(){
+  if(!currentMember) return false;
+  const raw=String(currentMember['Admin'] ?? currentMember['admin'] ?? '').trim().toLowerCase();
+  return ['yes','y','true','1'].includes(raw);
+}
+function applyAdminAccess(){
+  const allowed=isAdminMember();
+  const nav=document.getElementById('navAdmin');
+  const screen=document.getElementById('admin');
+  if(nav) nav.style.display=allowed?'':'none';
+  if(screen) screen.dataset.allowedAdmin=allowed?'yes':'no';
+  if(!allowed && screen && screen.classList.contains('active')) go('home');
+}
+
 function apply11sAccess(){
   const allowed=is11sPlayer();
   const nav=document.getElementById('navElevens');
@@ -1207,6 +1193,7 @@ async function loadMember(){
     document.getElementById('homeStreak').textContent=streak+' 🔥';
     document.getElementById('homeAttendance').textContent=Math.round(attendance)+'%';
     apply11sAccess();
+    applyAdminAccess();
     renderFfr();
     renderHomeFfr();
   }catch(e){
@@ -1980,6 +1967,7 @@ function confirmSquad(){
   loadMember(),
   loadTnf(),
   loadRankings(),
+  loadClubNews(),
   loadFixtures(),
   loadAdmin11s(),
   loadAdminTnf(),
