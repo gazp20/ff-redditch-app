@@ -29,6 +29,19 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 #ffrChart{width:100%;height:190px;display:block}
 .empty{color:var(--muted);padding:12px 0;text-align:center}
 @media(max-width:480px){main{padding:11px}.stats5{gap:4px}.mini{padding:9px 2px}.mini b{font-size:17px}#ffrChart{height:165px}}
+
+.ffr-toggle{width:100%;margin-top:10px;background:#22252b;color:#fff;border:1px solid #3a3e45;border-radius:12px;padding:11px 14px;font-weight:900;cursor:pointer}
+.pitch{position:relative;height:330px;border:2px solid #66d16f;border-radius:14px;overflow:hidden;margin-top:10px;background:repeating-linear-gradient(90deg,#176d2a 0,#176d2a 16.66%,#1b7a30 16.66%,#1b7a30 33.33%)}
+.pitch:before{content:"";position:absolute;left:0;right:0;top:50%;height:2px;background:rgba(255,255,255,.65)}
+.pitch:after{content:"";position:absolute;left:50%;top:50%;width:105px;height:105px;border:2px solid rgba(255,255,255,.65);border-radius:50%;transform:translate(-50%,-50%)}
+.pitch-box-top,.pitch-box-bottom{position:absolute;left:25%;width:50%;height:65px;border:2px solid rgba(255,255,255,.65)}
+.pitch-box-top{top:-2px}.pitch-box-bottom{bottom:-2px}
+.pitch-player{position:absolute;transform:translate(-50%,-50%);text-align:center;z-index:2;min-width:105px}
+.pitch-shirt{width:34px;height:30px;margin:0 auto 3px;background:#f5f5f3;color:#111;font-weight:900;display:grid;place-items:center;clip-path:polygon(18% 0,35% 12%,65% 12%,82% 0,100% 24%,82% 38%,82% 100%,18% 100%,18% 38%,0 24%)}
+.pitch-label{background:#060706;color:#fff;border-radius:8px;padding:5px 7px;font-size:11px;line-height:1.15;white-space:nowrap}
+.pitch-label b{display:block}.pitch-label span{color:#f1cf4a;font-weight:900;font-size:10px}
+@media(max-width:480px){.pitch{height:285px}.pitch-player{min-width:90px}.pitch-label{font-size:10px;padding:4px 5px}}
+
 </style>
 </head>
 <body>
@@ -95,6 +108,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
     <thead><tr><th>#</th><th>Player</th><th>Pts</th></tr></thead>
     <tbody id="ffrLeagueBody"><tr><td colspan="3" class="muted">Loading…</td></tr></tbody>
   </table>
+  <button id="ffrLeagueToggle" class="ffr-toggle" onclick="toggleFfrLeague()">SHOW FULL LIST ↓</button>
 </div>
 
 <div class="card">
@@ -103,6 +117,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
     <thead><tr><th>#</th><th>Player</th><th>% Lost</th><th>kg</th></tr></thead>
     <tbody id="ffrWeightBody"><tr><td colspan="4" class="muted">Loading…</td></tr></tbody>
   </table>
+  <button id="ffrWeightToggle" class="ffr-toggle" onclick="toggleFfrWeight()">SHOW FULL LIST ↓</button>
 </div>
 
 <div class="card">
@@ -207,6 +222,8 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 let currentMember = null;
 let currentTnfSession = null;
 let currentRankings = [];
+let showFullFfrLeague = false;
+let showFullFfrWeight = false;
 
 function go(id){
   document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
@@ -277,9 +294,26 @@ function drawFfrChart(items){
   svg.innerHTML=grid+`<polyline points="${pts}" fill="none" stroke="#d8b33f" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>`+dots;
 }
 
+function toggleFfrLeague(){showFullFfrLeague=!showFullFfrLeague;renderFfr();}
+function toggleFfrWeight(){showFullFfrWeight=!showFullFfrWeight;renderFfr();}
+
+function renderTeamPitch(team){
+  const el=document.getElementById('ffrTeamWeek');
+  if(!el) return;
+  if(!team.length){
+    el.innerHTML='<div class="muted">Team of the Week will appear once weekly FF Points are available.</div>';
+    return;
+  }
+  const positions=[{l:50,t:17},{l:22,t:50},{l:50,t:50},{l:78,t:50},{l:50,t:83}];
+  el.innerHTML=`<div class="muted" style="margin-bottom:8px">Top 5 performers this week</div>
+  <div class="pitch"><div class="pitch-box-top"></div><div class="pitch-box-bottom"></div>
+  ${team.map((p,i)=>{const q=positions[i];return `<div class="pitch-player" style="left:${q.l}%;top:${q.t}%">
+  <div class="pitch-shirt">${i+1}</div><div class="pitch-label"><b>${p.name}</b><span>${Number(p.weeklyPoints||0)} FF pts</span></div></div>`}).join('')}
+  </div>`;
+}
+
 function renderFfr(){
   if(!currentMember) return;
-
   const totalPoints=Number(currentMember['FF Total points']||0);
   document.getElementById('ffrPoints').textContent=totalPoints;
 
@@ -301,40 +335,38 @@ function renderFfr(){
   }
 
   const leagueBody=document.getElementById('ffrLeagueBody');
+  const leagueToggle=document.getElementById('ffrLeagueToggle');
   if(leagueBody){
-    if(!sorted.length){
-      leagueBody.innerHTML='<tr><td colspan="3" class="muted">No live rankings available.</td></tr>';
-    }else{
-      leagueBody.innerHTML=sorted.map((p,i)=>{
-        const isMe=String(p.name||'').trim().toLowerCase()===myName;
-        return `<tr><td>${i+1}</td><td>${isMe?'<b>'+p.name+' (You)</b>':p.name}</td><td class="${isMe?'gold':''}">${Number(p.totalPoints||0)}</td></tr>`;
-      }).join('');
+    const rows=showFullFfrLeague?sorted:sorted.slice(0,5);
+    leagueBody.innerHTML=rows.length?rows.map((p,i)=>{
+      const isMe=String(p.name||'').trim().toLowerCase()===myName;
+      return `<tr><td>${i+1}</td><td>${isMe?'<b>'+p.name+' (You)</b>':p.name}</td><td class="${isMe?'gold':''}">${Number(p.totalPoints||0)}</td></tr>`;
+    }).join(''):'<tr><td colspan="3" class="muted">No live rankings available.</td></tr>';
+    if(leagueToggle){
+      leagueToggle.style.display=sorted.length>5?'block':'none';
+      leagueToggle.textContent=showFullFfrLeague?'SHOW TOP 5 ↑':'SHOW FULL LIST ↓';
     }
   }
 
   const weightBody=document.getElementById('ffrWeightBody');
+  const weightToggle=document.getElementById('ffrWeightToggle');
   if(weightBody){
-    const weightRows=[...currentRankings]
-      .filter(p=>Number(p.percentLost)>0 || Number(p.totalKgLost)>0)
+    const weightRows=[...currentRankings].filter(p=>Number(p.percentLost)>0||Number(p.totalKgLost)>0)
       .sort((a,b)=>Number(b.percentLost||0)-Number(a.percentLost||0));
-    weightBody.innerHTML=weightRows.length ? weightRows.map((p,i)=>{
+    const rows=showFullFfrWeight?weightRows:weightRows.slice(0,5);
+    weightBody.innerHTML=rows.length?rows.map((p,i)=>{
       const isMe=String(p.name||'').trim().toLowerCase()===myName;
       return `<tr><td>${i+1}</td><td>${isMe?'<b>'+p.name+' (You)</b>':p.name}</td><td class="${isMe?'gold':''}">${Number(p.percentLost||0).toFixed(1)}%</td><td>${Number(p.totalKgLost||0).toFixed(1)}</td></tr>`;
-    }).join('') : '<tr><td colspan="4" class="muted">No live weight-loss rankings available.</td></tr>';
+    }).join(''):'<tr><td colspan="4" class="muted">No live weight-loss rankings available.</td></tr>';
+    if(weightToggle){
+      weightToggle.style.display=weightRows.length>5?'block':'none';
+      weightToggle.textContent=showFullFfrWeight?'SHOW TOP 5 ↑':'SHOW FULL LIST ↓';
+    }
   }
 
-  const teamEl=document.getElementById('ffrTeamWeek');
-  if(teamEl){
-    const team=[...currentRankings]
-      .filter(p=>Number(p.weeklyPoints)>0)
-      .sort((a,b)=>Number(b.weeklyPoints||0)-Number(a.weeklyPoints||0))
-      .slice(0,5);
-    teamEl.innerHTML=team.length ? team.map((p,i)=>`
-      <div class="listrow row">
-        <span>${i===0?'<b>'+p.name+'</b>':p.name}</span>
-        <span class="pill">${Number(p.weeklyPoints||0)} pts</span>
-      </div>`).join('') : '<div class="muted">Team of the Week will appear once weekly FF Points are available.</div>';
-  }
+  const team=[...currentRankings].filter(p=>Number(p.weeklyPoints)>0)
+    .sort((a,b)=>Number(b.weeklyPoints||0)-Number(a.weeklyPoints||0)).slice(0,5);
+  renderTeamPitch(team);
 }
 
 async function loadRankings(){
