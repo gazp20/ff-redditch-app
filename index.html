@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>FF Redditch App v0.8.2</title>
+<title>FF Redditch App v0.8.4</title>
 <style>
 :root{--bg:#0b0c0e;--card:#17191d;--card2:#22252b;--gold:#d8b33f;--text:#f5f5f3;--muted:#a7abb3;--green:#49cf7c;--red:#ef6066;--line:#2c3037}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;padding-bottom:92px}
@@ -52,7 +52,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 </style>
 </head>
 <body>
-<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.8.2 · FIXTURE ORDER FIX</div></header>
+<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.8.4 · 11s SQUAD + SUBS</div></header>
 <main>
 <section id="home" class="screen active">
 <div class="hero"><div class="eyebrow" id="homeWelcome">WELCOME BACK</div><h1>Your FF Redditch</h1><div class="muted">Football · Fitness · Community</div></div>
@@ -195,13 +195,42 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
   <div id="elevenNotice" class="muted" style="margin-top:8px"></div>
 </div>
 
+<div class="card" id="published11SquadCard" style="display:none">
+  <div class="eyebrow">11s · PUBLISHED SQUAD</div>
+  <div class="row">
+    <div>
+      <h2 id="published11SquadTitle">Squad</h2>
+      <div class="muted" id="published11SquadMeta"></div>
+    </div>
+    <span class="pill" id="published11MyStatus">SQUAD</span>
+  </div>
+  <div id="published11SquadNames" style="margin-top:10px"></div>
+</div>
+
 <div class="card">
   <div class="eyebrow">RECENT RESULT</div>
   <div id="last11Result"><div class="muted">Loading latest result…</div></div>
 </div>
 </section>
 
-<section id="payments" class="screen"><div class="hero"><div class="eyebrow">PAYMENTS</div><h1>£0.50 due</h1><div class="muted">TNF · 11s/Friendlies · Fines</div></div><div class="card"><div class="listrow row"><span>TNF · 8 Sept</span><b class="green">PAID £5</b></div><div class="listrow row"><span>11s · Wrexham</span><span class="muted">Awaiting selection</span></div><div class="listrow row"><span>Warm-up fine</span><b class="red">DUE £0.50</b></div><button class="btn btn-gold" style="width:100%;margin-top:12px">PAY £0.50</button></div><div class="card"><h3>PAYMENT HISTORY</h3><div class="listrow row"><span>TNF · 1 Sept</span><span class="green">£5 PAID</span></div></div></section>
+<section id="payments" class="screen">
+<div class="hero">
+  <div class="eyebrow">PAYMENTS</div>
+  <h1 id="paymentsDueTitle">£0.00 due</h1>
+  <div class="muted">TNF · 11s/Friendlies · Fines</div>
+</div>
+
+<div class="card">
+  <div class="eyebrow">11s · MATCH SUBS</div>
+  <h2>Your selected fixtures</h2>
+  <div id="elevenSubsList"><div class="muted">Loading 11s subs…</div></div>
+</div>
+
+<div class="card">
+  <div class="eyebrow">PAYMENT COLLECTION</div>
+  <div class="muted">The payment method itself is the next stage. Squad selection now creates the £6 match-sub item automatically.</div>
+</div>
+</section>
 
 <section id="admin" class="screen">
 <div class="hero"><div class="eyebrow">ADMIN TEAM · 3 ACCOUNTS</div><h1>FF Redditch Control</h1>
@@ -239,7 +268,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
     <button class="btn btn-dark" style="width:100%" onclick="resetTnfTeams()">RESET TEAMS</button>
   </div>
   <div id="adminTnfNotice" class="muted" style="font-size:11px;margin-top:8px">
-    Only players marked IN are included. You can edit and publish again at any time.
+    Only players marked IN are included. Any availability change returns teams to DRAFT for reallocation.
   </div>
 </div>
 
@@ -324,6 +353,8 @@ let tnfTeamAssignments = {};
 let currentFixtures = [];
 let showAll11Fixtures = false;
 let currentAdmin11s = null;
+let admin11SquadDrafts = {};
+let current11sSubs = {totalDue:0,items:[]};
 let openAdminFixtureId = '';
 let showAllAdmin11Fixtures = false;
 let currentRankings = [];
@@ -472,6 +503,184 @@ function renderAvailabilityButtons(f){
   </div>`;
 }
 
+
+function renderPublished11Squad(){
+  const card=document.getElementById('published11SquadCard');
+  if(!card) return;
+
+  const upcoming=(Array.isArray(currentFixtures)?currentFixtures:[])
+    .filter(f=>String(f.status||'').toLowerCase()==='upcoming' && f.squadPublished===true)
+    .sort((a,b)=>{
+      const ad=adminFixtureDateValue(a.date);
+      const bd=adminFixtureDateValue(b.date);
+      return ad-bd;
+    });
+
+  const fixture=upcoming[0];
+
+  if(!fixture){
+    card.style.display='none';
+    return;
+  }
+
+  card.style.display='block';
+
+  document.getElementById('published11SquadTitle').textContent=
+    `${fixture.opponent} ${fixture.ha?`(${fixture.ha})`:''}`;
+
+  document.getElementById('published11SquadMeta').textContent=
+    `${formatAppDate(fixture.date)} · ${fixture.ko||'TBC'} · ${fixture.competition||'11s'}`;
+
+  const status=document.getElementById('published11MyStatus');
+  if(fixture.squadSelected){
+    status.textContent='SELECTED ✓';
+    status.className='pill paid';
+  }else{
+    status.textContent='SQUAD PUBLISHED';
+    status.className='pill';
+  }
+
+  const names=Array.isArray(fixture.squadNames)?fixture.squadNames:[];
+
+  document.getElementById('published11SquadNames').innerHTML=
+    names.length
+      ? names.map((name,i)=>`<div class="listrow row"><span>${i+1}. ${escapeHtml(name)}</span></div>`).join('')
+      : '<div class="muted">No players listed.</div>';
+}
+
+function getAdminSquadDraft(fixture){
+  const id=fixture.fixtureId;
+
+  if(!Array.isArray(admin11SquadDrafts[id])){
+    admin11SquadDrafts[id]=Array.isArray(fixture.selectedEmails)
+      ? [...fixture.selectedEmails]
+      : [];
+  }
+
+  return admin11SquadDrafts[id];
+}
+
+function toggle11SquadPlayer(encodedFixtureId,encodedEmail){
+  const fixtureId=decodeURIComponent(encodedFixtureId);
+  const email=decodeURIComponent(encodedEmail).toLowerCase();
+  const fixture=(currentAdmin11s&&Array.isArray(currentAdmin11s.fixtures))
+    ? currentAdmin11s.fixtures.find(f=>f.fixtureId===fixtureId)
+    : null;
+
+  if(!fixture) return;
+
+  const draft=getAdminSquadDraft(fixture);
+  const index=draft.indexOf(email);
+
+  if(index>=0){
+    draft.splice(index,1);
+  }else{
+    draft.push(email);
+  }
+
+  renderAdmin11s();
+}
+
+async function save11Squad(encodedFixtureId,published){
+  const fixtureId=decodeURIComponent(encodedFixtureId);
+  const fixture=(currentAdmin11s&&Array.isArray(currentAdmin11s.fixtures))
+    ? currentAdmin11s.fixtures.find(f=>f.fixtureId===fixtureId)
+    : null;
+
+  if(!fixture) return;
+
+  const selectedEmails=getAdminSquadDraft(fixture);
+  const notice=document.getElementById('admin11SquadNotice-'+CSS.escape(fixtureId));
+
+  if(published && !selectedEmails.length){
+    if(notice) notice.textContent='Select at least one available player first.';
+    return;
+  }
+
+  if(notice) notice.textContent=published?'Publishing squad…':'Saving squad draft…';
+
+  try{
+    const res=await fetch('/api/11s/squad',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({
+        fixtureId,
+        selectedEmails,
+        published:published===true
+      })
+    });
+
+    const data=await res.json();
+
+    if(!res.ok||!data.success){
+      throw new Error(data.error||'Could not save squad');
+    }
+
+    delete admin11SquadDrafts[fixtureId];
+
+    await Promise.all([
+      loadAdmin11s(),
+      loadFixtures(),
+      load11sSubs()
+    ]);
+
+    if(notice){
+      notice.textContent=published
+        ? 'Squad published ✓ £6 subs created for selected players.'
+        : 'Squad draft saved ✓';
+    }
+  }catch(e){
+    if(notice) notice.textContent=e.message||'Could not save squad.';
+  }
+}
+
+async function load11sSubs(){
+  try{
+    const res=await fetch('/api/11s/subs',{cache:'no-store'});
+    const data=await res.json();
+
+    if(!res.ok||!data.success){
+      throw new Error(data.error||'Could not load 11s subs');
+    }
+
+    current11sSubs=data;
+  }catch(e){
+    current11sSubs={totalDue:0,items:[]};
+  }
+
+  render11sSubs();
+}
+
+function render11sSubs(){
+  const title=document.getElementById('paymentsDueTitle');
+  const list=document.getElementById('elevenSubsList');
+
+  if(title){
+    title.textContent=`£${Number(current11sSubs.totalDue||0).toFixed(2)} due`;
+  }
+
+  if(!list) return;
+
+  const items=Array.isArray(current11sSubs.items)?current11sSubs.items:[];
+
+  if(!items.length){
+    list.innerHTML='<div class="muted">No 11s match subs due.</div>';
+    return;
+  }
+
+  list.innerHTML=items.map(item=>`
+    <div class="listrow row">
+      <span>
+        <b>${escapeHtml(item.opponent||'11s fixture')}</b>
+        <small class="muted" style="display:block;margin-top:3px">${formatAppDate(item.date)}</small>
+      </span>
+      <b class="${item.status==='DUE'?'red':'green'}">
+        ${item.status} £${Number(item.amount||0).toFixed(2)}
+      </b>
+    </div>
+  `).join('');
+}
+
 function renderFixtures(){
   if(currentMember && !is11sPlayer()){
     return;
@@ -551,6 +760,7 @@ function renderFixtures(){
       : '<div class="muted">No played fixture found.</div>';
   }
 
+  renderPublished11Squad();
 }
 
 async function save11Availability(encodedFixtureId,response){
@@ -652,8 +862,6 @@ function renderAdmin11s(){
     const aSort=aHasSort ? Number(a.dateSort) : Number.MAX_SAFE_INTEGER;
     const bSort=bHasSort ? Number(b.dateSort) : Number.MAX_SAFE_INTEGER;
 
-    // Proper dated fixtures always come first, in chronological order.
-    // TBC / blank dates are deliberately pushed to the bottom.
     if(aSort!==bSort){
       return aSort-bSort;
     }
@@ -680,6 +888,23 @@ function renderAdmin11s(){
 
   const rows=visible.map(f=>{
     const open=openAdminFixtureId===f.fixtureId;
+    const draft=getAdminSquadDraft(f);
+    const availablePlayers=Array.isArray(f.availablePlayers)?f.availablePlayers:[];
+    const published=f.squadPublished===true;
+
+    const selector=availablePlayers.length
+      ? availablePlayers.map(player=>{
+          const email=String(player.email||'').toLowerCase();
+          const selected=draft.includes(email);
+
+          return `<button
+            class="toggle ${selected?'on':''}"
+            style="margin:3px"
+            onclick="toggle11SquadPlayer('${encodeURIComponent(f.fixtureId)}','${encodeURIComponent(email)}')"
+          >${selected?'✓ ':''}${escapeHtml(player.name)}</button>`;
+        }).join('')
+      : '<div class="muted">No players currently marked available.</div>';
+
     return `<div class="listrow">
       <button class="btn btn-dark" style="width:100%;text-align:left;padding:11px" onclick="toggleAdminFixture('${encodeURIComponent(f.fixtureId)}')">
         <div class="row">
@@ -694,11 +919,36 @@ function renderAdmin11s(){
           <div class="mini"><b class="red">${Number(f.unavailableCount||0)}</b><small>NOT AVAIL.</small></div>
           <div class="mini"><b>${Number(f.noReplyCount||0)}</b><small>NO REPLY</small></div>
         </div>
+        <div class="muted" style="margin-top:8px">
+          Squad: ${draft.length} selected · ${published?'PUBLISHED':'DRAFT'}
+        </div>
       </button>
+
       ${open?`<div style="padding:0 4px">
         ${namesBlock('✅ Available',f.availableNames||[],'Nobody yet')}
         ${namesBlock('❌ Not available',f.unavailableNames||[],'Nobody yet')}
         ${namesBlock('⏳ No reply',f.noReplyNames||[],'Everyone has replied')}
+
+        <div class="listrow">
+          <b>⚽ Select squad</b>
+          <div class="muted" style="margin-top:4px">
+            Only players marked Available can be selected.
+          </div>
+          <div style="margin-top:8px">${selector}</div>
+
+          <div class="row" style="gap:8px;margin-top:10px">
+            <button class="btn btn-dark" style="flex:1" onclick="save11Squad('${encodeURIComponent(f.fixtureId)}',false)">
+              SAVE DRAFT
+            </button>
+            <button class="btn btn-gold" style="flex:1" onclick="save11Squad('${encodeURIComponent(f.fixtureId)}',true)">
+              PUBLISH SQUAD
+            </button>
+          </div>
+
+          <div id="admin11SquadNotice-${escapeHtml(f.fixtureId)}" class="muted" style="margin-top:7px">
+            ${published?'Published squad creates £6 match subs for each selected player.':'Publishing will post the squad to the 11s page and create £6 subs.'}
+          </div>
+        </div>
       </div>`:''}
     </div>`;
   }).join('');
@@ -722,6 +972,14 @@ async function loadAdmin11s(){
     }
 
     currentAdmin11s=data;
+
+    (Array.isArray(data.fixtures)?data.fixtures:[]).forEach(f=>{
+      if(!Array.isArray(admin11SquadDrafts[f.fixtureId])){
+        admin11SquadDrafts[f.fixtureId]=Array.isArray(f.selectedEmails)
+          ? [...f.selectedEmails]
+          : [];
+      }
+    });
   }catch(e){
     currentAdmin11s={success:false,fixtures:[],total11sPlayers:0,error:e.message||'Could not load admin availability'};
   }
@@ -1206,10 +1464,11 @@ async function saveTnfResponse(response){
     const data=await res.json();
     if(!res.ok||!data.success) throw new Error(data.error||'Could not save response');
     document.getElementById('tnfNotice').textContent=response==='IN'
-      ?"You're in for TNF ✓"
+      ?"You're in for TNF ✓ Your previous team has been cleared and Admin can allocate you again."
       :"You're marked as out for TNF. Any team allocation has been removed.";
     await loadTnf();
     await loadAdminTnf();
+    await loadTnfWeighIn();
   }catch(e){
     document.getElementById('tnfNotice').textContent=e.message||'Could not save response';
   }finally{
@@ -1565,7 +1824,8 @@ function confirmSquad(){
   loadFixtures(),
   loadAdmin11s(),
   loadAdminTnf(),
-  loadTnfWeighIn()
+  loadTnfWeighIn(),
+  load11sSubs()
 ]);
 </script>
 </body></html>
