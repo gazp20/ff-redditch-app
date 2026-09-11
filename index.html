@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>FF Redditch App v0.7.4</title>
+<title>FF Redditch App v0.7.6</title>
 <style>
 :root{--bg:#0b0c0e;--card:#17191d;--card2:#22252b;--gold:#d8b33f;--text:#f5f5f3;--muted:#a7abb3;--green:#49cf7c;--red:#ef6066;--line:#2c3037}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;padding-bottom:92px}
@@ -52,7 +52,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 </style>
 </head>
 <body>
-<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.7.4 · 11s PLAYER ACCESS</div></header>
+<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.7.6 · ADMIN MATCH CENTRE</div></header>
 <main>
 <section id="home" class="screen active">
 <div class="hero"><div class="eyebrow" id="homeWelcome">WELCOME BACK</div><h1>Your FF Redditch</h1><div class="muted">Football · Fitness · Community</div></div>
@@ -111,7 +111,23 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 <div class="card"><h3>SESSION</h3>
   <div class="listrow row"><span>Registration</span><b id="tnfRegistration">Loading…</b></div>
   <div class="listrow row"><span>Spaces remaining</span><b id="tnfRemaining">—</b></div>
-  <div class="listrow row"><span>Teams</span><span class="muted">Released Tuesday</span></div>
+  <div class="listrow row"><span>Teams</span><span class="muted" id="tnfTeamsStatus">Not published yet</span></div>
+</div>
+
+<div class="card" id="tnfTeamsCard" style="display:none">
+  <div class="eyebrow">TNF · TEAMS</div>
+  <h2 id="tnfMyTeamTitle">Teams Published</h2>
+  <div id="tnfMyTeamNotice" class="muted" style="margin-bottom:12px"></div>
+  <div class="grid">
+    <div class="mini" style="text-align:left">
+      <b>🎨 COLOURS</b>
+      <div id="tnfColoursList" class="muted" style="margin-top:7px;line-height:1.6">—</div>
+    </div>
+    <div class="mini" style="text-align:left">
+      <b>⚪ WHITE</b>
+      <div id="tnfWhiteList" class="muted" style="margin-top:7px;line-height:1.6">—</div>
+    </div>
+  </div>
 </div>
 </section>
 
@@ -193,28 +209,42 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
       <div class="row"><span>👑 Gaz Price</span><span class="pill paid">ADMIN</span></div>
       <div class="row"><span>⚙ Stu Lees</span><span class="pill paid">ADMIN</span></div>
       <div class="row"><span>🛡 Michael Sealey</span><span class="pill paid">ADMIN</span></div>
-    </div></div><div class="grid"><div class="card"><div class="muted">TNF IN</div><div class="big green">12/18</div></div><div class="card"><div class="muted">NO REPLY</div><div class="big">7</div></div><div class="card"><div class="muted">Collected</div><div class="big">£85</div></div><div class="card"><div class="muted">Owed</div><div class="big red">£15</div></div></div><div class="card">
+    </div></div><div class="grid"><div class="card"><div class="muted">TNF IN</div><div class="big green" id="adminTopTnfIn">—</div></div><div class="card"><div class="muted">TEAMS</div><div class="big" id="adminTopTnfTeams">—</div></div><div class="card"><div class="muted">Collected</div><div class="big">£85</div></div><div class="card"><div class="muted">Owed</div><div class="big red">£15</div></div></div><div class="card">
 <div class="eyebrow">11s · AVAILABILITY FORECAST</div><h2>Upcoming Games</h2>
-<div class="muted">Live player responses from the 11s section.</div>
-<div class="admin-forecast-row" style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:900">
-  <span>Fixture</span><span>Avail.</span><span>No</span><span>No Reply</span>
-</div>
+<div class="muted">Live responses from active members marked as 11s Player = yes.</div>
+<div id="admin11TotalPlayers" class="muted" style="margin-top:6px">Loading 11s player count…</div>
 <div id="admin11Forecast"><div class="muted" style="padding:12px 0">Loading availability…</div></div>
 </div>
 <div class="card">
-<div class="eyebrow">11s · WREXHAM</div><h2>Availability & Squad Selection</h2>
-<div class="grid"><div class="mini"><b>14</b><small>AVAILABLE</small></div><div class="mini"><b>4</b><small>NOT AVAILABLE</small></div><div class="mini"><b>7</b><small>NO REPLY</small></div><div class="mini"><b>0</b><small>SELECTED</small></div></div>
-<div style="margin-top:12px">
-<table><tr><th>Player</th><th>Status</th><th>Squad</th></tr>
-<tr><td>Dan Bowen</td><td class="green">Available</td><td><button class="toggle" onclick="selectPlayer(this)">Select</button></td></tr>
-<tr><td>Kem Nedjat</td><td class="green">Available</td><td><button class="toggle" onclick="selectPlayer(this)">Select</button></td></tr>
-<tr><td>Craig Wood</td><td class="green">Available</td><td><button class="toggle" onclick="selectPlayer(this)">Select</button></td></tr>
-<tr><td>Chris Brazier</td><td class="red">Unavailable</td><td>—</td></tr>
-<tr><td>Ryan Sproston</td><td class="muted">No reply</td><td>—</td></tr></table>
-</div>
-<button class="btn btn-gold" style="width:100%;margin-top:12px" onclick="confirmSquad()">CONFIRM SQUAD</button>
-<div class="muted" style="font-size:11px;margin-top:8px">Confirming the squad creates a £6 payment item for selected players only.</div>
-</div><div class="card"><h3>TUESDAY WEIGH-IN</h3><div id="players"></div><button class="btn btn-gold" style="width:100%;margin-top:12px" onclick="alert('Prototype only — nothing live changed.')">COMPLETE SESSION & CALCULATE POINTS</button></div><div class="card stack"><button class="btn btn-dark">Create / Edit TNF Session</button><button class="btn btn-dark">Allocate Teams</button><button class="btn btn-dark">Add Fine</button><button class="btn btn-dark">11s Match Admin</button><button class="btn btn-dark">Payments & Outstanding</button></div></section>
+  <div class="eyebrow">TNF · TEAM BUILDER</div>
+  <div class="row">
+    <div>
+      <h2 id="adminTnfTitle">Next TNF</h2>
+      <div class="muted" id="adminTnfMeta">Loading players marked IN…</div>
+    </div>
+    <span class="pill" id="adminTnfPublishStatus">LOADING</span>
+  </div>
+
+  <div class="grid" style="margin-top:12px">
+    <div class="mini"><b id="adminTnfInCount">—</b><small>PLAYING</small></div>
+    <div class="mini"><b id="adminColoursCount">0</b><small>COLOURS</small></div>
+    <div class="mini"><b id="adminWhiteCount">0</b><small>WHITE</small></div>
+    <div class="mini"><b id="adminUnassignedCount">0</b><small>UNASSIGNED</small></div>
+  </div>
+
+  <div id="adminTnfPlayers" style="margin-top:12px">
+    <div class="muted">Loading TNF team builder…</div>
+  </div>
+
+  <div class="stack" style="margin-top:12px">
+    <button class="btn btn-dark" style="width:100%" onclick="saveTnfTeams(false)">SAVE DRAFT</button>
+    <button class="btn btn-gold" style="width:100%" onclick="saveTnfTeams(true)">PUBLISH TEAMS</button>
+    <button class="btn btn-dark" style="width:100%" onclick="resetTnfTeams()">RESET TEAMS</button>
+  </div>
+  <div id="adminTnfNotice" class="muted" style="font-size:11px;margin-top:8px">
+    Only players marked IN are included. You can edit and publish again at any time.
+  </div>
+</div><div class="card"><h3>TUESDAY WEIGH-IN</h3><div id="players"></div><button class="btn btn-gold" style="width:100%;margin-top:12px" onclick="alert('Prototype only — nothing live changed.')">COMPLETE SESSION & CALCULATE POINTS</button></div><div class="card stack"><button class="btn btn-dark">Create / Edit TNF Session</button><button class="btn btn-dark" onclick="document.getElementById('adminTnfTitle').scrollIntoView({behavior:'smooth',block:'start'})">Allocate TNF Teams</button><button class="btn btn-dark">Add Fine</button><button class="btn btn-dark">11s Match Admin</button><button class="btn btn-dark">Payments & Outstanding</button></div></section>
 
 <section id="more" class="screen"><div class="hero"><div class="eyebrow">MORE</div><h1>Club Hub</h1></div><div class="card stack"><button class="btn btn-dark">🍽 Matchday Fuel</button><button class="btn btn-dark">📖 FFR Rule Book</button><button class="btn btn-dark">📰 Club News</button><button class="btn btn-dark">👕 Kit Bag</button><button class="btn btn-dark">👤 Account</button></div></section>
 </main>
@@ -231,8 +261,12 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 
 let currentMember = null;
 let currentTnfSession = null;
+let currentAdminTnf = null;
+let tnfTeamAssignments = {};
 let currentFixtures = [];
 let showAll11Fixtures = false;
+let currentAdmin11s = null;
+let openAdminFixtureId = '';
 let currentRankings = [];
 let showFullFfrLeague = false;
 let showFullFfrWeight = false;
@@ -458,25 +492,6 @@ function renderFixtures(){
       : '<div class="muted">No played fixture found.</div>';
   }
 
-  const forecast=document.getElementById('admin11Forecast');
-  if(forecast){
-    const activeCount=Number(currentMember && currentMember['Active Members'] || 0);
-    forecast.innerHTML=upcoming.length
-      ? upcoming.slice(0,6).map(f=>{
-          const yes=Number(f.availableCount||0);
-          const no=Number(f.unavailableCount||0);
-          const fallbackTotal=41;
-          const total=activeCount>0?activeCount:fallbackTotal;
-          const noReply=Math.max(total-yes-no,0);
-          return `<div class="admin-forecast-row">
-            <span><b>${fixtureLabel(f)}</b><small>${formatAppDate(f.date)} · ${f.ko||'TBC'}</small></span>
-            <b class="green">${yes}</b>
-            <b>${no}</b>
-            <b class="muted">${noReply}</b>
-          </div>`;
-        }).join('')
-      : '<div class="muted" style="padding:12px 0">No upcoming fixtures.</div>';
-  }
 }
 
 async function save11Availability(encodedFixtureId,response){
@@ -501,6 +516,7 @@ async function save11Availability(encodedFixtureId,response){
 
     if(notice) notice.textContent=response==='AVAILABLE'?'Availability saved ✓':'Marked as not available.';
     renderFixtures();
+    loadAdmin11s();
   }catch(e){
     if(notice) notice.textContent=e.message||'Could not save availability';
   }
@@ -516,6 +532,88 @@ async function loadFixtures(){
     currentFixtures=[];
   }
   renderFixtures();
+}
+
+
+function toggleAdminFixture(encodedFixtureId){
+  const fixtureId=decodeURIComponent(encodedFixtureId);
+  openAdminFixtureId =
+    openAdminFixtureId === fixtureId ? '' : fixtureId;
+  renderAdmin11s();
+}
+
+function namesBlock(title,names,emptyText){
+  return `<div class="listrow">
+    <b>${title}</b>
+    <div class="muted" style="margin-top:5px">
+      ${names.length ? names.join(', ') : emptyText}
+    </div>
+  </div>`;
+}
+
+function renderAdmin11s(){
+  const el=document.getElementById('admin11Forecast');
+  if(!el) return;
+
+  if(!currentAdmin11s || !Array.isArray(currentAdmin11s.fixtures)){
+    el.innerHTML='<div class="muted" style="padding:12px 0">Loading availability…</div>';
+    return;
+  }
+
+  const fixtures=currentAdmin11s.fixtures;
+  const total=Number(currentAdmin11s.total11sPlayers||0);
+
+  const summary=document.getElementById('admin11TotalPlayers');
+  if(summary){
+    summary.textContent=total ? `${total} active 11s players` : 'No 11s players found';
+  }
+
+  if(!fixtures.length){
+    el.innerHTML='<div class="muted" style="padding:12px 0">No upcoming fixtures.</div>';
+    return;
+  }
+
+  el.innerHTML=fixtures.slice(0,6).map(f=>{
+    const open=openAdminFixtureId===f.fixtureId;
+    return `<div class="listrow">
+      <button class="btn btn-dark" style="width:100%;text-align:left;padding:11px" onclick="toggleAdminFixture('${encodeURIComponent(f.fixtureId)}')">
+        <div class="row">
+          <span>
+            <b>${fixtureLabel(f)}</b>
+            <small class="muted" style="display:block;margin-top:3px">${formatAppDate(f.date)} · ${f.ko||'TBC'}</small>
+          </span>
+          <span>${open?'▲':'▼'}</span>
+        </div>
+        <div class="grid" style="margin-top:9px">
+          <div class="mini"><b class="green">${Number(f.availableCount||0)}</b><small>AVAILABLE</small></div>
+          <div class="mini"><b class="red">${Number(f.unavailableCount||0)}</b><small>NOT AVAIL.</small></div>
+          <div class="mini"><b>${Number(f.noReplyCount||0)}</b><small>NO REPLY</small></div>
+        </div>
+      </button>
+      ${open?`<div style="padding:0 4px">
+        ${namesBlock('✅ Available',f.availableNames||[],'Nobody yet')}
+        ${namesBlock('❌ Not available',f.unavailableNames||[],'Nobody yet')}
+        ${namesBlock('⏳ No reply',f.noReplyNames||[],'Everyone has replied')}
+      </div>`:''}
+    </div>`;
+  }).join('');
+}
+
+async function loadAdmin11s(){
+  try{
+    const res=await fetch('/api/11s/admin',{cache:'no-store'});
+    const data=await res.json();
+
+    if(!res.ok||!data.success||!Array.isArray(data.fixtures)){
+      throw new Error(data.error||'Could not load admin availability');
+    }
+
+    currentAdmin11s=data;
+  }catch(e){
+    currentAdmin11s={success:false,fixtures:[],total11sPlayers:0,error:e.message||'Could not load admin availability'};
+  }
+
+  renderAdmin11s();
 }
 
 function renderHomeFfr(){
@@ -688,6 +786,254 @@ async function loadMember(){
   }
 }
 
+
+function escapeHtml(value){
+  return String(value??'')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#039;');
+}
+
+function renderPublishedTnfTeams(session){
+  const card=document.getElementById('tnfTeamsCard');
+  const status=document.getElementById('tnfTeamsStatus');
+
+  if(!card||!status) return;
+
+  if(!session || !session.teamsPublished){
+    card.style.display='none';
+    status.textContent='Not published yet';
+    return;
+  }
+
+  const colours=(session.teams&&Array.isArray(session.teams.colours))?session.teams.colours:[];
+  const white=(session.teams&&Array.isArray(session.teams.white))?session.teams.white:[];
+  const myTeam=String(session.myTeam||'').toUpperCase();
+
+  card.style.display='block';
+  status.textContent='Published ✓';
+
+  const title=document.getElementById('tnfMyTeamTitle');
+  const notice=document.getElementById('tnfMyTeamNotice');
+
+  if(myTeam==='COLOURS'){
+    title.textContent="YOU'RE PLAYING · TEAM COLOURS";
+    notice.textContent='Your TNF team has been published.';
+  }else if(myTeam==='WHITE'){
+    title.textContent="YOU'RE PLAYING · TEAM WHITE";
+    notice.textContent='Your TNF team has been published.';
+  }else{
+    title.textContent='TNF TEAMS PUBLISHED';
+    notice.textContent=session.myResponse==='IN'
+      ? 'You are marked IN but have not been assigned to a team yet.'
+      : 'Teams are available below.';
+  }
+
+  document.getElementById('tnfColoursList').innerHTML=
+    colours.length?colours.map(escapeHtml).join('<br>'):'No players assigned';
+
+  document.getElementById('tnfWhiteList').innerHTML=
+    white.length?white.map(escapeHtml).join('<br>'):'No players assigned';
+}
+
+function setTnfTeam(email,team){
+  const key=String(email||'').toLowerCase();
+  const next=String(team||'').toUpperCase();
+
+  if(next==='COLOURS'||next==='WHITE'){
+    tnfTeamAssignments[key]=next;
+  }else{
+    tnfTeamAssignments[key]='';
+  }
+
+  renderAdminTnfBuilder();
+}
+
+function renderAdminTnfBuilder(){
+  const playersEl=document.getElementById('adminTnfPlayers');
+  if(!playersEl) return;
+
+  const data=currentAdminTnf;
+
+  if(!data||!data.session){
+    document.getElementById('adminTnfTitle').textContent='No open TNF session';
+    document.getElementById('adminTnfMeta').textContent='Create/open the next TNF session first.';
+    document.getElementById('adminTnfInCount').textContent='0';
+    document.getElementById('adminColoursCount').textContent='0';
+    document.getElementById('adminWhiteCount').textContent='0';
+    document.getElementById('adminUnassignedCount').textContent='0';
+    document.getElementById('adminTnfPublishStatus').textContent='NO SESSION';
+    playersEl.innerHTML='<div class="muted">No TNF team builder available yet.</div>';
+    return;
+  }
+
+  const s=data.session;
+  const players=Array.isArray(data.players)?data.players:[];
+
+  document.getElementById('adminTnfTitle').textContent=formatTnfDate(s.date)+' · '+(s.time||'');
+  document.getElementById('adminTnfMeta').textContent=(s.venue||'Venue TBC')+' · assign only players marked IN';
+  document.getElementById('adminTnfInCount').textContent=players.length;
+  const topIn=document.getElementById('adminTopTnfIn');
+  if(topIn) topIn.textContent=players.length+'/'+Number(s.capacity||18);
+
+  let colours=0,white=0,unassigned=0;
+
+  players.forEach(p=>{
+    const team=String(tnfTeamAssignments[String(p.email||'').toLowerCase()]||'').toUpperCase();
+    if(team==='COLOURS') colours++;
+    else if(team==='WHITE') white++;
+    else unassigned++;
+  });
+
+  document.getElementById('adminColoursCount').textContent=colours;
+  document.getElementById('adminWhiteCount').textContent=white;
+  document.getElementById('adminUnassignedCount').textContent=unassigned;
+
+  const pill=document.getElementById('adminTnfPublishStatus');
+  pill.className='pill'+(data.published?' paid':'');
+  pill.textContent=data.published?'PUBLISHED':'DRAFT';
+  const topTeams=document.getElementById('adminTopTnfTeams');
+  if(topTeams) topTeams.textContent=data.published?'LIVE':'DRAFT';
+
+  if(!players.length){
+    playersEl.innerHTML='<div class="muted">Nobody is marked IN yet.</div>';
+    return;
+  }
+
+  playersEl.innerHTML=players.map(p=>{
+    const email=String(p.email||'').toLowerCase();
+    const team=String(tnfTeamAssignments[email]||'').toUpperCase();
+
+    return `<div class="adminrow">
+      <div>
+        <b>${escapeHtml(p.name)}</b>
+        <div class="muted">${team?('Team '+escapeHtml(team.toLowerCase().replace(/^./,c=>c.toUpperCase()))):'Unassigned'}</div>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end">
+        <button class="toggle ${team==='COLOURS'?'on':''}" onclick="setTnfTeam('${encodeURIComponent(email)}','COLOURS')">Colours</button>
+        <button class="toggle ${team==='WHITE'?'on':''}" onclick="setTnfTeam('${encodeURIComponent(email)}','WHITE')">White</button>
+        <button class="toggle ${!team?'on':''}" onclick="setTnfTeam('${encodeURIComponent(email)}','')">—</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Buttons use encoded email safely; normalize it after rendering click.
+}
+
+const originalSetTnfTeam=setTnfTeam;
+setTnfTeam=function(encodedEmail,team){
+  let email=encodedEmail;
+  try{ email=decodeURIComponent(encodedEmail); }catch(e){}
+  const key=String(email||'').toLowerCase();
+  const next=String(team||'').toUpperCase();
+
+  if(next==='COLOURS'||next==='WHITE'){
+    tnfTeamAssignments[key]=next;
+  }else{
+    tnfTeamAssignments[key]='';
+  }
+
+  renderAdminTnfBuilder();
+};
+
+async function loadAdminTnf(){
+  const notice=document.getElementById('adminTnfNotice');
+  try{
+    const res=await fetch('/api/tnf/admin',{cache:'no-store'});
+    const data=await res.json();
+
+    if(!res.ok||!data.success){
+      throw new Error(data.error||'Could not load TNF team builder');
+    }
+
+    currentAdminTnf=data;
+    tnfTeamAssignments={};
+
+    (Array.isArray(data.players)?data.players:[]).forEach(p=>{
+      tnfTeamAssignments[String(p.email||'').toLowerCase()]=String(p.team||'').toUpperCase();
+    });
+
+    renderAdminTnfBuilder();
+  }catch(e){
+    currentAdminTnf={success:false,session:null,players:[],published:false};
+    renderAdminTnfBuilder();
+    if(notice) notice.textContent=e.message||'Could not load TNF team builder.';
+  }
+}
+
+async function saveTnfTeams(published){
+  if(!currentAdminTnf||!currentAdminTnf.session){
+    return;
+  }
+
+  const notice=document.getElementById('adminTnfNotice');
+  const players=Array.isArray(currentAdminTnf.players)?currentAdminTnf.players:[];
+
+  if(published){
+    const unassigned=players.filter(p=>!tnfTeamAssignments[String(p.email||'').toLowerCase()]);
+    if(unassigned.length){
+      notice.textContent='Assign every player before publishing. '+unassigned.length+' still unassigned.';
+      return;
+    }
+  }
+
+  notice.textContent=published?'Publishing teams…':'Saving draft…';
+
+  const assignments=players.map(p=>({
+    email:p.email,
+    team:tnfTeamAssignments[String(p.email||'').toLowerCase()]||''
+  }));
+
+  try{
+    const res=await fetch('/api/tnf/teams',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({
+        sessionId:currentAdminTnf.session.id,
+        assignments,
+        published:published===true
+      })
+    });
+
+    const data=await res.json();
+
+    if(!res.ok||!data.success){
+      throw new Error(data.error||'Could not save TNF teams');
+    }
+
+    currentAdminTnf=data;
+    tnfTeamAssignments={};
+
+    (Array.isArray(data.players)?data.players:[]).forEach(p=>{
+      tnfTeamAssignments[String(p.email||'').toLowerCase()]=String(p.team||'').toUpperCase();
+    });
+
+    renderAdminTnfBuilder();
+    notice.textContent=published
+      ? 'Teams published ✓ Players can now see them in TNF.'
+      : 'Draft saved ✓';
+
+    await loadTnf();
+  }catch(e){
+    notice.textContent=e.message||'Could not save TNF teams.';
+  }
+}
+
+async function resetTnfTeams(){
+  if(!currentAdminTnf||!currentAdminTnf.session) return;
+
+  (Array.isArray(currentAdminTnf.players)?currentAdminTnf.players:[]).forEach(p=>{
+    tnfTeamAssignments[String(p.email||'').toLowerCase()]='';
+  });
+
+  renderAdminTnfBuilder();
+
+  const notice=document.getElementById('adminTnfNotice');
+  notice.textContent='Teams reset locally. Press SAVE DRAFT to store the reset.';
+}
+
 async function loadTnf(){
   const inBtn=document.getElementById('tnfInBtn');
   const outBtn=document.getElementById('tnfOutBtn');
@@ -716,6 +1062,7 @@ async function loadTnf(){
     setStatusPill(document.getElementById('tnfMyStatus'),s.myResponse);
     document.getElementById('tnfRegistration').textContent=s.full?'Full':(s.status||'Open');
     document.getElementById('tnfRemaining').textContent=remaining;
+    renderPublishedTnfTeams(s);
 
     inBtn.disabled=false;
     outBtn.disabled=false;
@@ -746,6 +1093,7 @@ async function saveTnfResponse(response){
     if(!res.ok||!data.success) throw new Error(data.error||'Could not save response');
     document.getElementById('tnfNotice').textContent=response==='IN'?"You're in for TNF ✓":"You're marked as out for TNF.";
     await loadTnf();
+    await loadAdminTnf();
   }catch(e){
     document.getElementById('tnfNotice').textContent=e.message||'Could not save response';
   }finally{
@@ -784,7 +1132,9 @@ function confirmSquad(){
   loadMember(),
   loadTnf(),
   loadRankings(),
-  loadFixtures()
+  loadFixtures(),
+  loadAdmin11s(),
+  loadAdminTnf()
 ]);
 </script>
 </body></html>
