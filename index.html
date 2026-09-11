@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>FF Redditch App v0.7.3</title>
+<title>FF Redditch App v0.7.4</title>
 <style>
 :root{--bg:#0b0c0e;--card:#17191d;--card2:#22252b;--gold:#d8b33f;--text:#f5f5f3;--muted:#a7abb3;--green:#49cf7c;--red:#ef6066;--line:#2c3037}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;padding-bottom:92px}
@@ -52,7 +52,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 </style>
 </head>
 <body>
-<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.7.3 · LIVE 11s AVAILABILITY</div></header>
+<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.7.4 · 11s PLAYER ACCESS</div></header>
 <main>
 <section id="home" class="screen active">
 <div class="hero"><div class="eyebrow" id="homeWelcome">WELCOME BACK</div><h1>Your FF Redditch</h1><div class="muted">Football · Fitness · Community</div></div>
@@ -222,7 +222,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 <button class="active" data-s="home" onclick="go('home')"><span class="navicon">⌂</span>Home</button>
 <button data-s="tnf" onclick="go('tnf')"><span class="navicon">⚽</span>TNF</button>
 <button data-s="ffr" onclick="go('ffr')"><span class="navicon">🏆</span>FFR</button>
-<button data-s="elevens" onclick="go('elevens')"><span class="navicon">11</span>11s</button>
+<button id="navElevens" data-s="elevens" onclick="go('elevens')"><span class="navicon">11</span>11s</button>
 <button data-s="payments" onclick="go('payments')"><span class="navicon">£</span>Payments</button>
 <button data-s="admin" onclick="go('admin')"><span class="navicon">⚙</span>Admin</button>
 <button data-s="more" onclick="go('more')"><span class="navicon">☰</span>More</button>
@@ -238,6 +238,9 @@ let showFullFfrLeague = false;
 let showFullFfrWeight = false;
 
 function go(id){
+  if(id==='elevens' && currentMember && !is11sPlayer()){
+    id='home';
+  }
   document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
   const screen=document.getElementById(id);
   if(screen) screen.classList.add('active');
@@ -377,6 +380,9 @@ function renderAvailabilityButtons(f){
 }
 
 function renderFixtures(){
+  if(currentMember && !is11sPlayer()){
+    return;
+  }
   const upcoming=getUpcomingFixtures();
   const next=upcoming[0]||null;
 
@@ -629,6 +635,36 @@ async function loadRankings(){
   renderFfr();
 }
 
+
+function is11sPlayer(){
+  if(!currentMember) return false;
+  const raw=String(
+    currentMember['11s Player'] ??
+    currentMember['11s player'] ??
+    currentMember['11s'] ??
+    ''
+  ).trim().toLowerCase();
+
+  return ['yes','y','true','1'].includes(raw);
+}
+
+function apply11sAccess(){
+  const allowed=is11sPlayer();
+  const nav=document.getElementById('navElevens');
+  const screen=document.getElementById('elevens');
+
+  if(nav) nav.style.display=allowed?'':'none';
+
+  // Keep the section unavailable for non-11s players even if someone
+  // tries to call go('elevens') manually in the browser console.
+  if(screen) screen.dataset.allowed11s=allowed?'yes':'no';
+
+  // If a non-11s player somehow lands on the 11s screen, return home.
+  if(!allowed && screen && screen.classList.contains('active')){
+    go('home');
+  }
+}
+
 async function loadMember(){
   try{
     const res=await fetch('/api/me',{cache:'no-store'});
@@ -644,6 +680,7 @@ async function loadMember(){
     document.getElementById('homeFfPoints').textContent=ffPoints;
     document.getElementById('homeStreak').textContent=streak+' 🔥';
     document.getElementById('homeAttendance').textContent=Math.round(attendance)+'%';
+    apply11sAccess();
     renderFfr();
     renderHomeFfr();
   }catch(e){
