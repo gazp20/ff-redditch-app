@@ -402,6 +402,7 @@ let showAllAdmin11Fixtures = false;
 let currentRankings = [];
 let showFullFfrLeague = false;
 let showFullFfrWeight = false;
+let tnfVoteSaves = new Set();
 
 function go(id){
   if(id==='elevens' && currentMember && !is11sPlayer()) id='home';
@@ -411,6 +412,16 @@ function go(id){
   if(screen) screen.classList.add('active');
   document.querySelectorAll('nav button').forEach(e=>e.classList.toggle('active',e.dataset.s===id));
   window.scrollTo(0,0);
+
+  // Admin data must always be fresh when the admin page is opened.
+  // This picks up players who have voted IN since this app was first loaded.
+  if(id==='admin' && currentMember && isAdminMember()){
+    Promise.allSettled([
+      loadAdminTnf(),
+      loadTnfWeighIn(),
+      loadAdmin11s()
+    ]);
+  }
 }
 
 function formatTnfDate(dateText){
@@ -1524,6 +1535,12 @@ async function saveTnfResponseFor(which,response){
   const session=isNext ? nextTnfSession : currentTnfSession;
   if(!session||!session.id) return;
 
+  // Ignore a second tap until the first response for this session is fully saved.
+  // This prevents rapid IN -> OUT (or OUT -> IN) requests racing each other.
+  const voteKey=String(session.id||'');
+  if(tnfVoteSaves.has(voteKey)) return;
+  tnfVoteSaves.add(voteKey);
+
   const inBtn=document.getElementById(isNext?'nextTnfInBtn':'tnfInBtn');
   const outBtn=document.getElementById(isNext?'nextTnfOutBtn':'tnfOutBtn');
   const notice=document.getElementById(isNext?'nextTnfNotice':'tnfNotice');
@@ -1557,6 +1574,7 @@ async function saveTnfResponseFor(which,response){
   }catch(e){
     notice.textContent=e.message||'Could not save response';
   }finally{
+    tnfVoteSaves.delete(voteKey);
     inBtn.disabled=false;
     outBtn.disabled=false;
   }
