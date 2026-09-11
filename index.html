@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>FF Redditch App v0.7.0</title>
+<title>FF Redditch App v0.7.2</title>
 <style>
 :root{--bg:#0b0c0e;--card:#17191d;--card2:#22252b;--gold:#d8b33f;--text:#f5f5f3;--muted:#a7abb3;--green:#49cf7c;--red:#ef6066;--line:#2c3037}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;padding-bottom:92px}
@@ -45,24 +45,46 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 </style>
 </head>
 <body>
-<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.7.0 · LIVE FFR</div></header>
+<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.7.2 · LIVE HOME + FFR</div></header>
 <main>
 <section id="home" class="screen active">
 <div class="hero"><div class="eyebrow" id="homeWelcome">WELCOME BACK</div><h1>Your FF Redditch</h1><div class="muted">Football · Fitness · Community</div></div>
-<div class="card"><div class="row"><div><div class="eyebrow">NEXT TNF</div><h2 id="homeTnfTitle">Loading TNF…</h2><div class="muted" id="homeTnfMeta">Checking next session</div></div><span class="pill" id="homeTnfStatus">LOADING</span></div></div>
+
 <div class="card">
-<div class="row">
-  <div>
-    <div class="eyebrow">NEXT 11s</div>
-    <h2>Wrexham (H)</h2>
-    <div class="muted">Sunday 6 September · 16:15</div>
-    <div class="muted">Arrowvale 3G</div>
+  <div class="row">
+    <div>
+      <div class="eyebrow">NEXT TNF</div>
+      <h2 id="homeTnfTitle">Loading TNF…</h2>
+      <div class="muted" id="homeTnfMeta">Checking next session</div>
+    </div>
+    <span class="pill" id="homeTnfStatus">LOADING</span>
   </div>
-  <span class="pill paid">AVAILABLE ✓</span>
 </div>
-</div></div>
-<div class="grid"><div class="card"><div class="muted">FF Points</div><div class="big gold" id="homeFfPoints">—</div></div><div class="card"><div class="muted">Balance</div><div class="big">£5.50</div><small class="red">Due</small></div><div class="card"><div class="muted">Streak</div><div class="big" id="homeStreak">—</div></div><div class="card"><div class="muted">Attendance</div><div class="big" id="homeAttendance">—</div></div></div>
-<div class="card"><div class="eyebrow">CLUB NEWS</div><h2>Top scorer: Dan Bowen</h2><div class="muted">5% Club: Dan Bowen & Mark Sanders</div></div>
+
+<div class="card">
+  <div class="row">
+    <div>
+      <div class="eyebrow">NEXT 11s</div>
+      <h2 id="home11Title">Loading fixture…</h2>
+      <div class="muted" id="home11Meta">Reading Fixtures sheet</div>
+      <div class="muted" id="home11Venue"></div>
+    </div>
+    <span class="pill" id="home11Status">LOADING</span>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card"><div class="muted">FF Points</div><div class="big gold" id="homeFfPoints">—</div></div>
+  <div class="card"><div class="muted">FFR Rank</div><div class="big" id="homeRank">—</div><small class="muted" id="homeRankMeta"></small></div>
+  <div class="card"><div class="muted">Streak</div><div class="big" id="homeStreak">—</div></div>
+  <div class="card"><div class="muted">Attendance</div><div class="big" id="homeAttendance">—</div></div>
+</div>
+
+<div class="card">
+  <div class="eyebrow">CLUB NEWS · LIVE</div>
+  <h2 id="homeNewsTitle">Loading FFR…</h2>
+  <div class="muted" id="homeNewsMeta">Checking latest progress</div>
+</div>
 </section>
 
 <section id="tnf" class="screen">
@@ -134,41 +156,28 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 
 <section id="elevens" class="screen">
 <div class="hero">
-  <div class="eyebrow">NEXT 11s</div>
-  <h1>Wrexham (H)</h1>
-  <div class="muted">Sunday 6 September · 16:15 · Arrowvale 3G</div>
-  <h2 style="margin-top:18px">Are you available?</h2>
-  <div class="choice">
-    <button class="btn btn-green" onclick="set11s('available')">✓ I'M AVAILABLE</button>
-    <button class="btn btn-red" onclick="set11s('unavailable')">✕ NOT AVAILABLE</button>
-  </div>
-  <div id="avail11" class="pill" style="display:inline-block;margin-top:12px">NO RESPONSE YET</div>
+  <div class="eyebrow">NEXT 11s · LIVE</div>
+  <h1 id="elevensNextTitle">Loading fixture…</h1>
+  <div class="muted" id="elevensNextMeta">Reading the Fixtures sheet</div>
+  <div class="muted" id="elevensNextVenue" style="margin-top:4px"></div>
+  <div style="margin-top:14px"><span class="pill paid" id="elevensCompetition">LOADING</span></div>
 </div>
+
 <div class="card">
-  <div class="eyebrow">SQUAD STATUS</div>
-  <h2 id="squadStatus">Awaiting squad selection</h2>
-  <div class="muted">Submitting availability does not create a payment. If selected, your £6 match fee will be added to Payments.</div>
+  <div class="eyebrow">AVAILABILITY</div>
+  <h2>11s availability is next</h2>
+  <div class="muted">The fixture list is now live from Google Sheets. Player availability and squad selection will be connected in the next build.</div>
 </div>
+
 <div class="card">
-  <h3>HOW 11s WORKS</h3>
-  <div class="listrow"><b>1. Availability</b><div class="muted">Tell the management team if you're available.</div></div>
-  <div class="listrow"><b>2. Squad selected</b><div class="muted">Admins choose the match squad.</div></div>
-  <div class="listrow"><b>3. £6 match fee</b><div class="muted">Only selected players receive the charge.</div></div>
+  <div class="eyebrow">UPCOMING 11s</div>
+  <h2>Fixture list</h2>
+  <div id="upcoming11List"><div class="muted">Loading fixtures…</div></div>
 </div>
+
 <div class="card">
-<div class="eyebrow">SEASON AVAILABILITY</div><h2>Plan ahead</h2>
-<div class="muted">You can submit or change your availability for every upcoming 11s fixture.</div>
-<button class="btn btn-dark" style="width:100%;margin-top:12px" onclick="document.getElementById('all11games').style.display='block'">VIEW ALL FIXTURES & VOTE</button>
-<div id="all11games" style="display:none;margin-top:12px">
-<div class="listrow"><div class="row"><b>Wrexham (H) · 6 Sep</b><span class="pill paid">Available</span></div><div class="choice"><button class="btn btn-green">Available</button><button class="btn btn-dark">Not Available</button></div></div>
-<div class="listrow"><div class="row"><b>Wirral · Upcoming</b><span class="pill">No reply</span></div><div class="choice"><button class="btn btn-green">Available</button><button class="btn btn-dark">Not Available</button></div></div>
-<div class="listrow"><div class="row"><b>Oldbury Lions · Upcoming</b><span class="pill">No reply</span></div><div class="choice"><button class="btn btn-green">Available</button><button class="btn btn-dark">Not Available</button></div></div>
-<div class="listrow"><div class="row"><b>Stoke · Upcoming</b><span class="pill">No reply</span></div><div class="choice"><button class="btn btn-green">Available</button><button class="btn btn-dark">Not Available</button></div></div>
-</div></div>
-<div class="card"><h3>UPCOMING 11s</h3>
-  <div class="listrow row"><span>Wrexham (H)</span><b>6 Sep</b></div>
-  <div class="listrow row"><span>Wirral</span><b>Upcoming</b></div>
-  <div class="listrow row"><span>Oldbury Lions</span><b>Upcoming</b></div>
+  <div class="eyebrow">RECENT RESULT</div>
+  <div id="last11Result"><div class="muted">Loading latest result…</div></div>
 </div>
 </section>
 
@@ -221,6 +230,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 
 let currentMember = null;
 let currentTnfSession = null;
+let currentFixtures = [];
 let currentRankings = [];
 let showFullFfrLeague = false;
 let showFullFfrWeight = false;
@@ -292,6 +302,171 @@ function drawFfrChart(items){
   const pts=items.map((d,i)=>`${x(i)},${y(d.weight)}`).join(' ');
   const dots=items.map((d,i)=>`<circle cx="${x(i)}" cy="${y(d.weight)}" r="5" fill="#d8b33f"/>`).join('');
   svg.innerHTML=grid+`<polyline points="${pts}" fill="none" stroke="#d8b33f" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>`+dots;
+}
+
+
+function parseAppDate(value){
+  const text=String(value||'').trim();
+  if(!text) return null;
+  const parts=text.split('/');
+  if(parts.length===3){
+    const d=new Date(Number(parts[2]),Number(parts[1])-1,Number(parts[0]));
+    d.setHours(0,0,0,0);
+    return Number.isNaN(d.getTime())?null:d;
+  }
+  const d=new Date(text);
+  if(Number.isNaN(d.getTime())) return null;
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function formatAppDate(value){
+  const d=parseAppDate(value);
+  if(!d) return value||'Date TBC';
+  return d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+}
+
+function fixtureLabel(f){
+  const ha=String(f.ha||'').trim();
+  return `${f.opponent||'Opponent TBC'}${ha?' ('+ha+')':''}`;
+}
+
+function getUpcomingFixtures(){
+  const today=new Date();
+  today.setHours(0,0,0,0);
+  return [...currentFixtures]
+    .filter(f=>{
+      const status=String(f.status||'').trim().toLowerCase();
+      const d=parseAppDate(f.date);
+      return status==='upcoming' && (!d || d>=today);
+    })
+    .sort((a,b)=>{
+      const da=parseAppDate(a.date), db=parseAppDate(b.date);
+      if(!da&&!db) return 0;
+      if(!da) return 1;
+      if(!db) return -1;
+      return da-db;
+    });
+}
+
+function getPlayedFixtures(){
+  return [...currentFixtures]
+    .filter(f=>String(f.status||'').trim().toLowerCase()==='played')
+    .sort((a,b)=>{
+      const da=parseAppDate(a.date), db=parseAppDate(b.date);
+      if(!da&&!db) return 0;
+      if(!da) return 1;
+      if(!db) return -1;
+      return db-da;
+    });
+}
+
+function renderFixtures(){
+  const upcoming=getUpcomingFixtures();
+  const next=upcoming[0]||null;
+
+  const homeTitle=document.getElementById('home11Title');
+  const homeMeta=document.getElementById('home11Meta');
+  const homeVenue=document.getElementById('home11Venue');
+  const homeStatus=document.getElementById('home11Status');
+
+  const nextTitle=document.getElementById('elevensNextTitle');
+  const nextMeta=document.getElementById('elevensNextMeta');
+  const nextVenue=document.getElementById('elevensNextVenue');
+  const nextComp=document.getElementById('elevensCompetition');
+
+  if(next){
+    const label=fixtureLabel(next);
+    const meta=[formatAppDate(next.date),next.ko,next.competition].filter(Boolean).join(' · ');
+
+    if(homeTitle) homeTitle.textContent=label;
+    if(homeMeta) homeMeta.textContent=meta;
+    if(homeVenue) homeVenue.textContent=next.venue||'Venue TBC';
+    if(homeStatus){
+      homeStatus.textContent=next.ha==='H'?'HOME':next.ha==='A'?'AWAY':'11s';
+      homeStatus.className='pill paid';
+    }
+
+    if(nextTitle) nextTitle.textContent=label;
+    if(nextMeta) nextMeta.textContent=meta;
+    if(nextVenue) nextVenue.textContent=next.venue||'Venue TBC';
+    if(nextComp) nextComp.textContent=next.competition||'11s';
+  }else{
+    if(homeTitle) homeTitle.textContent='Next fixture TBC';
+    if(homeMeta) homeMeta.textContent='No upcoming fixture currently listed.';
+    if(homeVenue) homeVenue.textContent='';
+    if(homeStatus){homeStatus.textContent='TBC';homeStatus.className='pill';}
+    if(nextTitle) nextTitle.textContent='Next fixture TBC';
+    if(nextMeta) nextMeta.textContent='No upcoming fixture currently listed.';
+    if(nextVenue) nextVenue.textContent='';
+    if(nextComp) nextComp.textContent='11s';
+  }
+
+  const upcomingEl=document.getElementById('upcoming11List');
+  if(upcomingEl){
+    upcomingEl.innerHTML=upcoming.length
+      ? upcoming.slice(0,8).map(f=>`
+          <div class="listrow">
+            <div class="row">
+              <b>${fixtureLabel(f)}</b>
+              <span class="pill">${f.ko||'TBC'}</span>
+            </div>
+            <div class="muted">${formatAppDate(f.date)} · ${f.competition||'Competition TBC'}</div>
+            <div class="muted">${f.venue||'Venue TBC'}</div>
+          </div>`).join('')
+      : '<div class="muted">No upcoming fixtures listed.</div>';
+  }
+
+  const recent=getPlayedFixtures()[0]||null;
+  const recentEl=document.getElementById('last11Result');
+  if(recentEl){
+    recentEl.innerHTML=recent
+      ? `<div class="row"><div><h2 style="margin:0 0 5px">${fixtureLabel(recent)}</h2><div class="muted">${formatAppDate(recent.date)} · ${recent.competition||''}</div></div><div class="big gold">${recent.result||'—'}</div></div>
+         ${recent.scorers?`<div class="listrow"><b>Scorers</b><div class="muted">${recent.scorers}</div></div>`:''}
+         ${recent.motm?`<div class="listrow"><b>MOTM</b><div class="muted">${recent.motm}</div></div>`:''}`
+      : '<div class="muted">No played fixture found.</div>';
+  }
+}
+
+async function loadFixtures(){
+  try{
+    const res=await fetch('/api/fixtures',{cache:'no-store'});
+    const data=await res.json();
+    if(!res.ok||!data.success||!Array.isArray(data.fixtures)) throw new Error(data.error||'Could not load fixtures');
+    currentFixtures=data.fixtures;
+  }catch(e){
+    currentFixtures=[];
+  }
+  renderFixtures();
+}
+
+function renderHomeFfr(){
+  const sorted=[...currentRankings].sort((a,b)=>Number(b.totalPoints||0)-Number(a.totalPoints||0));
+  const myName=memberName().toLowerCase();
+  const pos=sorted.findIndex(p=>String(p.name||'').trim().toLowerCase()===myName);
+
+  const rank=document.getElementById('homeRank');
+  const rankMeta=document.getElementById('homeRankMeta');
+  if(rank) rank.textContent=pos>=0?'#'+(pos+1):'—';
+  if(rankMeta) rankMeta.textContent=sorted.length?'of '+sorted.length:'';
+
+  const newsTitle=document.getElementById('homeNewsTitle');
+  const newsMeta=document.getElementById('homeNewsMeta');
+  const leader=sorted[0]||null;
+  const fiveClub=[...currentRankings]
+    .filter(p=>Number(p.percentLost||0)>=5)
+    .sort((a,b)=>Number(b.percentLost||0)-Number(a.percentLost||0));
+
+  if(newsTitle){
+    newsTitle.textContent=leader
+      ? `FFR leader: ${leader.name} · ${Number(leader.totalPoints||0)} pts`
+      : 'FFR rankings loading…';
+  }
+  if(newsMeta){
+    newsMeta.textContent=fiveClub.length
+      ? '5% Club: '+fiveClub.map(p=>p.name).join(', ')
+      : 'The 5% Club is waiting for its next member.';
+  }
 }
 
 function toggleFfrLeague(){showFullFfrLeague=!showFullFfrLeague;renderFfr();}
@@ -367,6 +542,7 @@ function renderFfr(){
   const team=[...currentRankings].filter(p=>Number(p.weeklyPoints)>0)
     .sort((a,b)=>Number(b.weeklyPoints||0)-Number(a.weeklyPoints||0)).slice(0,5);
   renderTeamPitch(team);
+  renderHomeFfr();
 }
 
 async function loadRankings(){
@@ -397,6 +573,7 @@ async function loadMember(){
     document.getElementById('homeStreak').textContent=streak+' 🔥';
     document.getElementById('homeAttendance').textContent=Math.round(attendance)+'%';
     renderFfr();
+    renderHomeFfr();
   }catch(e){
     document.getElementById('homeWelcome').textContent='WELCOME BACK';
   }
@@ -497,7 +674,8 @@ function confirmSquad(){
   Promise.allSettled([
   loadMember(),
   loadTnf(),
-  loadRankings()
+  loadRankings(),
+  loadFixtures()
 ]);
 </script>
 </body></html>
