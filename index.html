@@ -17,7 +17,7 @@ h1{font-size:24px;margin:7px 0}h2{font-size:18px;margin:6px 0 10px}h3{font-size:
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .listrow{padding:11px 0;border-bottom:1px solid var(--line)}.listrow:last-child{border:0}
 .pill{font-size:11px;font-weight:900;border-radius:999px;padding:7px 9px;background:#292c32}.paid{background:#183b28;color:#8be8ad}
-.btn{border:0;border-radius:12px;padding:12px 14px;font-weight:900}.btn-gold{background:var(--gold);color:#16130a}.btn-green{background:var(--green);color:#07160d}.btn-red{background:var(--red);color:#fff}.btn-dark{background:var(--card2);color:#fff;border:1px solid #3a3e45}
+.btn{border:0;border-radius:12px;padding:12px 14px;font-weight:900}.btn-gold{background:var(--gold);color:#16130a}.btn-green{background:var(--green);color:#07160d}.btn-red{background:var(--red);color:#fff}.btn.vote-muted{opacity:.32;filter:saturate(.55);}.btn-dark{background:var(--card2);color:#fff;border:1px solid #3a3e45}
 .choice{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:13px}.stack{display:grid;gap:8px}
 .stats5{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:12px}.mini{background:#101114;border:1px solid var(--line);border-radius:12px;text-align:center;padding:10px 4px}.mini b{font-size:19px;display:block}.mini small{font-size:9px;color:var(--muted)}
 table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:9px 4px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-size:10px;text-transform:uppercase}
@@ -127,8 +127,6 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
   </div>
   <div id="tnfNotice" class="muted" style="margin-top:10px"></div>
 </div>
-<div class="card"><div class="row"><b>Your status</b><span class="pill" id="tnfMyStatus">LOADING</span></div></div>
-
 <div class="card next-tnf-card" id="nextTnfVoteCard" style="display:none">
   <div class="eyebrow">NEXT TNF</div>
   <div class="row">
@@ -439,6 +437,15 @@ function setStatusPill(el,response){
   if(r==='IN'){el.textContent="I'M IN";el.classList.add('paid');}
   else if(r==='OUT'){el.textContent="I'M OUT";}
   else{el.textContent='NO RESPONSE';}
+}
+
+function setTnfVoteButtons(inBtn,outBtn,response){
+  if(!inBtn||!outBtn) return;
+  const r=String(response||'').toUpperCase();
+  inBtn.classList.toggle('vote-muted',r==='OUT');
+  outBtn.classList.toggle('vote-muted',r==='IN');
+  inBtn.setAttribute('aria-pressed',r==='IN'?'true':'false');
+  outBtn.setAttribute('aria-pressed',r==='OUT'?'true':'false');
 }
 
 function setHomeTnfStatus(el,response){
@@ -1489,7 +1496,7 @@ async function loadTnf(){
     document.getElementById('tnfInCount').textContent=count;
     document.getElementById('tnfCapacity').textContent=capacity;
     document.getElementById('tnfSpaces').textContent=s.full?'Session full':remaining+' spaces remaining';
-    setStatusPill(document.getElementById('tnfMyStatus'),s.myResponse);
+    setTnfVoteButtons(inBtn,outBtn,s.myResponse);
     document.getElementById('tnfRegistration').textContent=s.full?'Full':(s.status||'Open');
     document.getElementById('tnfRemaining').textContent=remaining;
     renderPublishedTnfTeams(s);
@@ -1508,8 +1515,10 @@ async function loadTnf(){
       document.getElementById('nextTnfMeta').textContent=n.time+' · '+n.venue+' · '+nCount+'/'+nCapacity+' playing';
       document.getElementById('nextTnfSpaces').textContent=n.full?'Session full':nRemaining+' spaces remaining';
       setStatusPill(document.getElementById('nextTnfMyStatus'),n.myResponse);
+      setTnfVoteButtons(document.getElementById('nextTnfInBtn'),document.getElementById('nextTnfOutBtn'),n.myResponse);
     }else{
       nextCard.style.display='none';
+      setTnfVoteButtons(document.getElementById('nextTnfInBtn'),document.getElementById('nextTnfOutBtn'),'');
     }
   }catch(e){
     currentTnfSession=null;
