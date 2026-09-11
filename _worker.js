@@ -123,6 +123,24 @@ export default {
       });
     }
 
+
+    if (
+      url.pathname === "/api/fixtures" ||
+      url.pathname === "/api/fixtures/"
+    ) {
+      const result = await callMembersApi({
+        action: "fixtures"
+      });
+
+      return new Response(result.body, {
+        status: result.status,
+        headers: {
+          "content-type": "application/json; charset=UTF-8",
+          "cache-control": "no-store"
+        }
+      });
+    }
+
     if (
       url.pathname === "/api/tnf/next" ||
       url.pathname === "/api/tnf/next/"
