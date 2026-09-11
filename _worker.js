@@ -152,6 +152,34 @@ export default {
     }
 
 
+
+    if (
+      url.pathname === "/api/11s/admin" ||
+      url.pathname === "/api/11s/admin/"
+    ) {
+      const email = getAccessEmail();
+
+      if (!email) {
+        return json({
+          success: false,
+          error: "Authenticated member email not found"
+        }, 401);
+      }
+
+      const result = await callMembersApi({
+        action: "11s_admin_availability",
+        email
+      });
+
+      return new Response(result.body, {
+        status: result.status,
+        headers: {
+          "content-type": "application/json; charset=UTF-8",
+          "cache-control": "no-store"
+        }
+      });
+    }
+
     if (
       url.pathname === "/api/11s/respond" ||
       url.pathname === "/api/11s/respond/"
@@ -214,6 +242,82 @@ export default {
       const result = await callMembersApi({
         action: "tnf_next_session",
         email
+      });
+
+      return new Response(result.body, {
+        status: result.status,
+        headers: {
+          "content-type": "application/json; charset=UTF-8",
+          "cache-control": "no-store"
+        }
+      });
+    }
+
+
+    if (
+      url.pathname === "/api/tnf/admin" ||
+      url.pathname === "/api/tnf/admin/"
+    ) {
+      const email = getAccessEmail();
+
+      if (!email) {
+        return json({
+          success: false,
+          error: "Authenticated member email not found"
+        }, 401);
+      }
+
+      const result = await callMembersApi({
+        action: "tnf_admin_teams",
+        email
+      });
+
+      return new Response(result.body, {
+        status: result.status,
+        headers: {
+          "content-type": "application/json; charset=UTF-8",
+          "cache-control": "no-store"
+        }
+      });
+    }
+
+    if (
+      url.pathname === "/api/tnf/teams" ||
+      url.pathname === "/api/tnf/teams/"
+    ) {
+      if (request.method !== "POST") {
+        return json({
+          success: false,
+          error: "POST required"
+        }, 405);
+      }
+
+      const email = getAccessEmail();
+
+      if (!email) {
+        return json({
+          success: false,
+          error: "Authenticated member email not found"
+        }, 401);
+      }
+
+      let body = {};
+
+      try {
+        body = await request.json();
+      } catch (error) {
+        return json({
+          success: false,
+          error: "Invalid JSON"
+        }, 400);
+      }
+
+      const result = await callMembersApi({
+        action: "tnf_save_teams",
+        email,
+        sessionId: body.sessionId || "",
+        assignments: Array.isArray(body.assignments) ? body.assignments : [],
+        published: body.published === true
       });
 
       return new Response(result.body, {
