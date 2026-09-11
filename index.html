@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>FF Redditch App v0.7.9</title>
+<title>FF Redditch App v0.8.0</title>
 <style>
 :root{--bg:#0b0c0e;--card:#17191d;--card2:#22252b;--gold:#d8b33f;--text:#f5f5f3;--muted:#a7abb3;--green:#49cf7c;--red:#ef6066;--line:#2c3037}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;padding-bottom:92px}
@@ -52,7 +52,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 </style>
 </head>
 <body>
-<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.7.9 · 11s DATE ORDER FIX</div></header>
+<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.8.0 · WEEKLY WEIGH-IN</div></header>
 <main>
 <section id="home" class="screen active">
 <div class="hero"><div class="eyebrow" id="homeWelcome">WELCOME BACK</div><h1>Your FF Redditch</h1><div class="muted">Football · Fitness · Community</div></div>
@@ -243,7 +243,46 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
   </div>
 </div>
 
-<div class="card"><h3>TUESDAY WEIGH-IN</h3><div id="players"></div><button class="btn btn-gold" style="width:100%;margin-top:12px" onclick="alert('Prototype only — nothing live changed.')">COMPLETE SESSION & CALCULATE POINTS</button></div>
+<div class="card">
+  <div class="eyebrow">TNF · WEEKLY RESULTS</div>
+  <div class="row">
+    <div>
+      <h2>Tuesday Weigh-In</h2>
+      <div class="muted" id="tnfWeighInMeta">Loading weekly weigh-in…</div>
+    </div>
+    <span class="pill" id="tnfWeighInStatus">LOADING</span>
+  </div>
+
+  <div style="margin-top:12px">
+    <div class="muted" style="margin-bottom:6px">WINNING TEAM</div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <button id="winnerColoursBtn" class="toggle" onclick="setWinningTeam('COLOURS')">Colours</button>
+      <button id="winnerWhiteBtn" class="toggle" onclick="setWinningTeam('WHITE')">White</button>
+      <button id="winnerDrawBtn" class="toggle" onclick="setWinningTeam('DRAW')">Draw</button>
+    </div>
+  </div>
+
+  <div id="players" style="margin-top:12px">
+    <div class="muted">Loading players…</div>
+  </div>
+
+  <div class="card" style="margin-top:12px;padding:10px">
+    <div class="row">
+      <b>Weekly FFP preview</b>
+      <b id="weeklyFfpTotal">0 pts</b>
+    </div>
+    <div class="muted" style="margin-top:4px">
+      Loss +2 · Maintain +1 · Gain −1 · Winning team +1 · Goal +1
+    </div>
+  </div>
+
+  <button class="btn btn-gold" style="width:100%;margin-top:12px" onclick="publishWeeklyResults()">
+    PUBLISH WEEKLY RESULTS
+  </button>
+  <div id="tnfWeighInNotice" class="muted" style="font-size:11px;margin-top:8px">
+    Results are saved to a separate TNF Weekly Results tab. Members is not overwritten.
+  </div>
+</div>
 
 <div class="card">
 <div class="eyebrow">11s · AVAILABILITY FORECAST</div><h2>Upcoming Games</h2>
@@ -278,6 +317,9 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 let currentMember = null;
 let currentTnfSession = null;
 let currentAdminTnf = null;
+let currentTnfWeighIn = null;
+let tnfWeighInDraft = {};
+let tnfWinningTeam = '';
 let tnfTeamAssignments = {};
 let currentFixtures = [];
 let showAll11Fixtures = false;
@@ -604,8 +646,16 @@ function renderAdmin11s(){
   }
 
   const fixtures=[...currentAdmin11s.fixtures].sort((a,b)=>{
+    const aSort=Number(a.dateSort);
+    const bSort=Number(b.dateSort);
+
+    if(Number.isFinite(aSort)&&Number.isFinite(bSort)&&aSort!==bSort){
+      return aSort-bSort;
+    }
+
     const dateDiff=adminFixtureDateValue(a.date)-adminFixtureDateValue(b.date);
     if(dateDiff!==0) return dateDiff;
+
     return String(a.ko||'').localeCompare(String(b.ko||''));
   });
 
@@ -1074,6 +1124,7 @@ async function saveTnfTeams(published){
       : 'Draft saved ✓';
 
     await loadTnf();
+    await loadTnfWeighIn();
   }catch(e){
     notice.textContent=e.message||'Could not save TNF teams.';
   }
@@ -1159,19 +1210,333 @@ async function saveTnfResponse(response){
   }
 }
 
-const names=['Dan Bowen','Chris Brazier','Kem Nedjat','Craig Wood','Ryan Sproston'];
-document.getElementById('players').innerHTML=names.map(n=>`
-  <div class="adminrow">
-    <div>
-      <b>${n}</b>
-      <div class="muted">Weight <input placeholder="kg"></div>
-      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:7px">
-        <button class="toggle on" onclick="this.classList.toggle('on')">Attended</button>
-        <button class="toggle" onclick="this.classList.toggle('on')">Winner +1</button>
-        <button class="toggle" onclick="this.classList.toggle('on')">⚽ Goal +1</button>
+
+
+function setWinningTeam(team){
+  tnfWinningTeam=String(team||'').toUpperCase();
+
+  ['COLOURS','WHITE','DRAW'].forEach(value=>{
+    const id=value==='COLOURS'
+      ? 'winnerColoursBtn'
+      : value==='WHITE'
+        ? 'winnerWhiteBtn'
+        : 'winnerDrawBtn';
+
+    const btn=document.getElementById(id);
+    if(btn) btn.classList.toggle('on',tnfWinningTeam===value);
+  });
+
+  renderTnfWeighIn();
+}
+
+function setWeighInValue(encodedEmail,field,value){
+  let email=encodedEmail;
+  try{email=decodeURIComponent(encodedEmail);}catch(e){}
+
+  email=String(email||'').toLowerCase();
+
+  if(!tnfWeighInDraft[email]){
+    tnfWeighInDraft[email]={};
+  }
+
+  if(field==='attended'){
+    tnfWeighInDraft[email].attended=!!value;
+  }else if(field==='weeklyWeight'){
+    tnfWeighInDraft[email].weeklyWeight=value;
+  }else if(field==='goals'){
+    tnfWeighInDraft[email].goals=Math.max(0,Number(value||0));
+  }
+
+  renderTnfWeighIn();
+}
+
+function calcWeeklyFfp(player,draft){
+  const attended=draft.attended!==false;
+
+  if(!attended){
+    return {
+      weightPoints:0,
+      winnerPoints:0,
+      goalPoints:0,
+      total:0,
+      result:'Absent'
+    };
+  }
+
+  const prev=Number(player.previousWeight);
+  const curr=Number(draft.weeklyWeight);
+
+  let weightPoints=0;
+  let result='Enter weight';
+
+  if(Number.isFinite(prev)&&prev>0&&Number.isFinite(curr)&&curr>0){
+    if(curr<prev){
+      weightPoints=2;
+      result='Loss +2';
+    }else if(curr===prev){
+      weightPoints=1;
+      result='Maintain +1';
+    }else{
+      weightPoints=-1;
+      result='Gain −1';
+    }
+  }
+
+  const team=String(player.team||'').toUpperCase();
+  const winnerPoints=
+    tnfWinningTeam &&
+    tnfWinningTeam!=='DRAW' &&
+    team===tnfWinningTeam
+      ? 1
+      : 0;
+
+  const goalPoints=Math.max(0,Number(draft.goals||0));
+
+  return {
+    weightPoints,
+    winnerPoints,
+    goalPoints,
+    total:weightPoints+winnerPoints+goalPoints,
+    result
+  };
+}
+
+function renderTnfWeighIn(){
+  const container=document.getElementById('players');
+  if(!container) return;
+
+  const data=currentTnfWeighIn;
+
+  if(!data||!data.session){
+    document.getElementById('tnfWeighInMeta').textContent='No open TNF session.';
+    document.getElementById('tnfWeighInStatus').textContent='NO SESSION';
+    document.getElementById('weeklyFfpTotal').textContent='0 pts';
+    container.innerHTML='<div class="muted">No TNF session available.</div>';
+    return;
+  }
+
+  const players=Array.isArray(data.players)?data.players:[];
+  document.getElementById('tnfWeighInMeta').textContent=
+    `${formatTnfDate(data.session.date)} · ${data.session.time||''} · ${players.length} players`;
+
+  const status=document.getElementById('tnfWeighInStatus');
+  status.textContent=data.published?'PUBLISHED':'DRAFT';
+  status.className='pill'+(data.published?' paid':'');
+
+  ['COLOURS','WHITE','DRAW'].forEach(value=>{
+    const id=value==='COLOURS'
+      ? 'winnerColoursBtn'
+      : value==='WHITE'
+        ? 'winnerWhiteBtn'
+        : 'winnerDrawBtn';
+
+    const btn=document.getElementById(id);
+    if(btn) btn.classList.toggle('on',tnfWinningTeam===value);
+  });
+
+  let total=0;
+
+  if(!players.length){
+    container.innerHTML='<div class="muted">Nobody is marked IN for this TNF session.</div>';
+    document.getElementById('weeklyFfpTotal').textContent='0 pts';
+    return;
+  }
+
+  container.innerHTML=players.map(player=>{
+    const email=String(player.email||'').toLowerCase();
+    const draft=tnfWeighInDraft[email]||{
+      attended:true,
+      weeklyWeight:'',
+      goals:0
+    };
+
+    const points=calcWeeklyFfp(player,draft);
+    total+=points.total;
+
+    const attended=draft.attended!==false;
+    const previous=
+      player.previousWeight!==''&&player.previousWeight!==null
+        ? `${escapeHtml(player.previousWeight)} kg`
+        : 'Not set';
+
+    return `<div class="adminrow" style="align-items:flex-start">
+      <div style="width:100%">
+        <div class="row">
+          <div>
+            <b>${escapeHtml(player.name)}</b>
+            <div class="muted">${escapeHtml(player.team||'Unassigned')} · Previous ${previous}</div>
+          </div>
+          <b>${points.total>=0?'+':''}${points.total} FFP</b>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+          <label class="muted">
+            Weekly weight
+            <input
+              type="number"
+              step="0.1"
+              min="1"
+              value="${escapeHtml(draft.weeklyWeight??'')}"
+              ${attended?'':'disabled'}
+              oninput="setWeighInValue('${encodeURIComponent(email)}','weeklyWeight',this.value)"
+              placeholder="kg"
+              style="width:100%;margin-top:4px"
+            >
+          </label>
+          <label class="muted">
+            Goals
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value="${Number(draft.goals||0)}"
+              ${attended?'':'disabled'}
+              oninput="setWeighInValue('${encodeURIComponent(email)}','goals',this.value)"
+              style="width:100%;margin-top:4px"
+            >
+          </label>
+        </div>
+
+        <div class="row" style="margin-top:8px">
+          <button
+            class="toggle ${attended?'on':''}"
+            onclick="setWeighInValue('${encodeURIComponent(email)}','attended',${attended?'false':'true'})"
+          >${attended?'Attended ✓':'Absent'}</button>
+
+          <span class="muted">
+            ${points.result}
+            ${points.winnerPoints?' · Winner +1':''}
+            ${points.goalPoints?` · Goals +${points.goalPoints}`:''}
+          </span>
+        </div>
       </div>
-    </div>
-  </div>`).join('');
+    </div>`;
+  }).join('');
+
+  document.getElementById('weeklyFfpTotal').textContent=`${total} pts`;
+}
+
+async function loadTnfWeighIn(){
+  const notice=document.getElementById('tnfWeighInNotice');
+
+  try{
+    const res=await fetch('/api/tnf/weighin',{cache:'no-store'});
+    const data=await res.json();
+
+    if(!res.ok||!data.success){
+      throw new Error(data.error||'Could not load weekly weigh-in');
+    }
+
+    currentTnfWeighIn=data;
+    tnfWinningTeam=String(data.winningTeam||'').toUpperCase();
+    tnfWeighInDraft={};
+
+    (Array.isArray(data.players)?data.players:[]).forEach(player=>{
+      tnfWeighInDraft[String(player.email||'').toLowerCase()]={
+        attended:player.attended!==false,
+        weeklyWeight:
+          player.weeklyWeight!==undefined&&player.weeklyWeight!==null
+            ? player.weeklyWeight
+            : '',
+        goals:Number(player.goals||0)
+      };
+    });
+
+    renderTnfWeighIn();
+  }catch(e){
+    currentTnfWeighIn={success:false,session:null,players:[],published:false};
+    renderTnfWeighIn();
+    if(notice) notice.textContent=e.message||'Could not load weekly weigh-in.';
+  }
+}
+
+async function publishWeeklyResults(){
+  const notice=document.getElementById('tnfWeighInNotice');
+
+  if(!currentTnfWeighIn||!currentTnfWeighIn.session){
+    if(notice) notice.textContent='No TNF session to publish.';
+    return;
+  }
+
+  if(!tnfWinningTeam){
+    if(notice) notice.textContent='Choose the winning team first.';
+    return;
+  }
+
+  const players=Array.isArray(currentTnfWeighIn.players)
+    ? currentTnfWeighIn.players
+    : [];
+
+  const missing=players.filter(player=>{
+    const draft=tnfWeighInDraft[String(player.email||'').toLowerCase()]||{};
+    if(draft.attended===false) return false;
+    const weight=Number(draft.weeklyWeight);
+    return !Number.isFinite(weight)||weight<=0;
+  });
+
+  if(missing.length){
+    if(notice){
+      notice.textContent=
+        'Add a weekly weight or mark absent: '+
+        missing.map(p=>p.name).join(', ');
+    }
+    return;
+  }
+
+  const results=players.map(player=>{
+    const draft=tnfWeighInDraft[String(player.email||'').toLowerCase()]||{};
+    return {
+      email:player.email,
+      attended:draft.attended!==false,
+      weeklyWeight:draft.weeklyWeight,
+      goals:Number(draft.goals||0)
+    };
+  });
+
+  if(notice) notice.textContent='Publishing weekly results…';
+
+  try{
+    const res=await fetch('/api/tnf/results',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({
+        sessionId:currentTnfWeighIn.session.id,
+        winningTeam:tnfWinningTeam,
+        results
+      })
+    });
+
+    const data=await res.json();
+
+    if(!res.ok||!data.success){
+      throw new Error(data.error||'Could not publish weekly results');
+    }
+
+    currentTnfWeighIn=data;
+    tnfWinningTeam=String(data.winningTeam||tnfWinningTeam).toUpperCase();
+
+    tnfWeighInDraft={};
+    (Array.isArray(data.players)?data.players:[]).forEach(player=>{
+      tnfWeighInDraft[String(player.email||'').toLowerCase()]={
+        attended:player.attended!==false,
+        weeklyWeight:
+          player.weeklyWeight!==undefined&&player.weeklyWeight!==null
+            ? player.weeklyWeight
+            : '',
+        goals:Number(player.goals||0)
+      };
+    });
+
+    renderTnfWeighIn();
+
+    if(notice){
+      notice.textContent=
+        'Published ✓ Saved to TNF Weekly Results. Members has not been changed.';
+    }
+  }catch(e){
+    if(notice) notice.textContent=e.message||'Could not publish weekly results.';
+  }
+}
 
 function set11s(status){
   const el=document.getElementById('avail11');
@@ -1192,7 +1557,8 @@ function confirmSquad(){
   loadRankings(),
   loadFixtures(),
   loadAdmin11s(),
-  loadAdminTnf()
+  loadAdminTnf(),
+  loadTnfWeighIn()
 ]);
 </script>
 </body></html>
