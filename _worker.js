@@ -180,6 +180,82 @@ export default {
       });
     }
 
+
+    if (
+      url.pathname === "/api/11s/squad" ||
+      url.pathname === "/api/11s/squad/"
+    ) {
+      if (request.method !== "POST") {
+        return json({
+          success: false,
+          error: "POST required"
+        }, 405);
+      }
+
+      const email = getAccessEmail();
+
+      if (!email) {
+        return json({
+          success: false,
+          error: "Authenticated member email not found"
+        }, 401);
+      }
+
+      let input = {};
+
+      try {
+        input = await request.json();
+      } catch (error) {
+        return json({
+          success: false,
+          error: "Invalid JSON"
+        }, 400);
+      }
+
+      const result = await callMembersApi({
+        action: "11s_save_squad",
+        email,
+        fixtureId: input.fixtureId || "",
+        selectedEmails: Array.isArray(input.selectedEmails) ? input.selectedEmails : [],
+        published: input.published === true
+      });
+
+      return new Response(result.body, {
+        status: result.status,
+        headers: {
+          "content-type": "application/json; charset=UTF-8",
+          "cache-control": "no-store"
+        }
+      });
+    }
+
+    if (
+      url.pathname === "/api/11s/subs" ||
+      url.pathname === "/api/11s/subs/"
+    ) {
+      const email = getAccessEmail();
+
+      if (!email) {
+        return json({
+          success: false,
+          error: "Authenticated member email not found"
+        }, 401);
+      }
+
+      const result = await callMembersApi({
+        action: "11s_my_subs",
+        email
+      });
+
+      return new Response(result.body, {
+        status: result.status,
+        headers: {
+          "content-type": "application/json; charset=UTF-8",
+          "cache-control": "no-store"
+        }
+      });
+    }
+
     if (
       url.pathname === "/api/11s/respond" ||
       url.pathname === "/api/11s/respond/"
