@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>FF Redditch App v0.7.2</title>
+<title>FF Redditch App v0.7.3</title>
 <style>
 :root{--bg:#0b0c0e;--card:#17191d;--card2:#22252b;--gold:#d8b33f;--text:#f5f5f3;--muted:#a7abb3;--green:#49cf7c;--red:#ef6066;--line:#2c3037}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;padding-bottom:92px}
@@ -42,10 +42,17 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 .pitch-label b{display:block}.pitch-label span{color:#f1cf4a;font-weight:900;font-size:10px}
 @media(max-width:480px){.pitch{height:285px}.pitch-player{min-width:90px}.pitch-label{font-size:10px;padding:4px 5px}}
 
+
+.avail-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.avail-actions .btn.active-yes{background:#183b28;color:#8be8ad;border:1px solid #2d6b45}
+.avail-actions .btn.active-no{background:#4a2024;color:#ff9aa0;border:1px solid #7c343b}
+.admin-forecast-row{display:grid;grid-template-columns:1fr 54px 54px 54px;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.admin-forecast-row small{display:block;color:var(--muted);margin-top:3px}
+
 </style>
 </head>
 <body>
-<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.7.2 · LIVE HOME + FFR</div></header>
+<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.7.3 · LIVE 11s AVAILABILITY</div></header>
 <main>
 <section id="home" class="screen active">
 <div class="hero"><div class="eyebrow" id="homeWelcome">WELCOME BACK</div><h1>Your FF Redditch</h1><div class="muted">Football · Fitness · Community</div></div>
@@ -164,15 +171,12 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 </div>
 
 <div class="card">
-  <div class="eyebrow">AVAILABILITY</div>
-  <h2>11s availability is next</h2>
-  <div class="muted">The fixture list is now live from Google Sheets. Player availability and squad selection will be connected in the next build.</div>
-</div>
-
-<div class="card">
-  <div class="eyebrow">UPCOMING 11s</div>
-  <h2>Fixture list</h2>
-  <div id="upcoming11List"><div class="muted">Loading fixtures…</div></div>
+  <div class="eyebrow">YOUR AVAILABILITY</div>
+  <h2>Upcoming games</h2>
+  <div class="muted">Vote on each fixture. You can change your answer at any time.</div>
+  <div id="upcoming11List" style="margin-top:8px"><div class="muted">Loading fixtures…</div></div>
+  <button id="showAll11Btn" class="ffr-toggle" onclick="toggleAll11Fixtures()" style="display:none">SHOW ALL FIXTURES ↓</button>
+  <div id="elevenNotice" class="muted" style="margin-top:8px"></div>
 </div>
 
 <div class="card">
@@ -191,14 +195,11 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
       <div class="row"><span>🛡 Michael Sealey</span><span class="pill paid">ADMIN</span></div>
     </div></div><div class="grid"><div class="card"><div class="muted">TNF IN</div><div class="big green">12/18</div></div><div class="card"><div class="muted">NO REPLY</div><div class="big">7</div></div><div class="card"><div class="muted">Collected</div><div class="big">£85</div></div><div class="card"><div class="muted">Owed</div><div class="big red">£15</div></div></div><div class="card">
 <div class="eyebrow">11s · AVAILABILITY FORECAST</div><h2>Upcoming Games</h2>
-<div class="muted">Quick view so the admin team can see likely numbers well in advance.</div>
-<table style="margin-top:10px"><tr><th>Fixture</th><th>Avail.</th><th>No</th><th>Reply</th></tr>
-<tr><td>Wrexham (H)<br><small class="muted">6 Sep</small></td><td class="green"><b>14</b></td><td>4</td><td>7</td></tr>
-<tr><td>Wirral<br><small class="muted">Upcoming</small></td><td class="green"><b>17</b></td><td>3</td><td>5</td></tr>
-<tr><td>Oldbury Lions<br><small class="muted">Upcoming</small></td><td class="green"><b>12</b></td><td>5</td><td>8</td></tr>
-<tr><td>Stoke<br><small class="muted">Upcoming</small></td><td class="green"><b>10</b></td><td>2</td><td>13</td></tr>
-</table>
-<button class="btn btn-dark" style="width:100%;margin-top:12px">VIEW PLAYER-BY-PLAYER AVAILABILITY</button>
+<div class="muted">Live player responses from the 11s section.</div>
+<div class="admin-forecast-row" style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:900">
+  <span>Fixture</span><span>Avail.</span><span>No</span><span>No Reply</span>
+</div>
+<div id="admin11Forecast"><div class="muted" style="padding:12px 0">Loading availability…</div></div>
 </div>
 <div class="card">
 <div class="eyebrow">11s · WREXHAM</div><h2>Availability & Squad Selection</h2>
@@ -231,6 +232,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 let currentMember = null;
 let currentTnfSession = null;
 let currentFixtures = [];
+let showAll11Fixtures = false;
 let currentRankings = [];
 let showFullFfrLeague = false;
 let showFullFfrWeight = false;
@@ -361,6 +363,19 @@ function getPlayedFixtures(){
     });
 }
 
+function toggleAll11Fixtures(){
+  showAll11Fixtures=!showAll11Fixtures;
+  renderFixtures();
+}
+
+function renderAvailabilityButtons(f){
+  const response=String(f.myResponse||'').toUpperCase();
+  return `<div class="avail-actions">
+    <button class="btn btn-dark ${response==='AVAILABLE'?'active-yes':''}" onclick="save11Availability('${encodeURIComponent(f.fixtureId)}','AVAILABLE')">✓ AVAILABLE</button>
+    <button class="btn btn-dark ${response==='UNAVAILABLE'?'active-no':''}" onclick="save11Availability('${encodeURIComponent(f.fixtureId)}','UNAVAILABLE')">✕ NOT AVAILABLE</button>
+  </div>`;
+}
+
 function renderFixtures(){
   const upcoming=getUpcomingFixtures();
   const next=upcoming[0]||null;
@@ -403,9 +418,12 @@ function renderFixtures(){
   }
 
   const upcomingEl=document.getElementById('upcoming11List');
+  const showBtn=document.getElementById('showAll11Btn');
+
   if(upcomingEl){
-    upcomingEl.innerHTML=upcoming.length
-      ? upcoming.slice(0,8).map(f=>`
+    const visible=showAll11Fixtures ? upcoming : upcoming.slice(0,2);
+    upcomingEl.innerHTML=visible.length
+      ? visible.map(f=>`
           <div class="listrow">
             <div class="row">
               <b>${fixtureLabel(f)}</b>
@@ -413,8 +431,15 @@ function renderFixtures(){
             </div>
             <div class="muted">${formatAppDate(f.date)} · ${f.competition||'Competition TBC'}</div>
             <div class="muted">${f.venue||'Venue TBC'}</div>
+            <div class="muted" style="margin-top:5px">Available: ${Number(f.availableCount||0)} · Not available: ${Number(f.unavailableCount||0)}</div>
+            ${renderAvailabilityButtons(f)}
           </div>`).join('')
       : '<div class="muted">No upcoming fixtures listed.</div>';
+  }
+
+  if(showBtn){
+    showBtn.style.display=upcoming.length>2?'block':'none';
+    showBtn.textContent=showAll11Fixtures?'SHOW NEXT 2 ↑':'SHOW ALL FIXTURES ↓';
   }
 
   const recent=getPlayedFixtures()[0]||null;
@@ -425,6 +450,53 @@ function renderFixtures(){
          ${recent.scorers?`<div class="listrow"><b>Scorers</b><div class="muted">${recent.scorers}</div></div>`:''}
          ${recent.motm?`<div class="listrow"><b>MOTM</b><div class="muted">${recent.motm}</div></div>`:''}`
       : '<div class="muted">No played fixture found.</div>';
+  }
+
+  const forecast=document.getElementById('admin11Forecast');
+  if(forecast){
+    const activeCount=Number(currentMember && currentMember['Active Members'] || 0);
+    forecast.innerHTML=upcoming.length
+      ? upcoming.slice(0,6).map(f=>{
+          const yes=Number(f.availableCount||0);
+          const no=Number(f.unavailableCount||0);
+          const fallbackTotal=41;
+          const total=activeCount>0?activeCount:fallbackTotal;
+          const noReply=Math.max(total-yes-no,0);
+          return `<div class="admin-forecast-row">
+            <span><b>${fixtureLabel(f)}</b><small>${formatAppDate(f.date)} · ${f.ko||'TBC'}</small></span>
+            <b class="green">${yes}</b>
+            <b>${no}</b>
+            <b class="muted">${noReply}</b>
+          </div>`;
+        }).join('')
+      : '<div class="muted" style="padding:12px 0">No upcoming fixtures.</div>';
+  }
+}
+
+async function save11Availability(encodedFixtureId,response){
+  const notice=document.getElementById('elevenNotice');
+  if(notice) notice.textContent='Saving…';
+
+  try{
+    const fixtureId=decodeURIComponent(encodedFixtureId);
+    const res=await fetch('/api/11s/respond',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({fixtureId,response})
+    });
+    const data=await res.json();
+    if(!res.ok||!data.success) throw new Error(data.error||'Could not save availability');
+
+    if(Array.isArray(data.fixtures)){
+      currentFixtures=data.fixtures;
+    }else{
+      await loadFixtures();
+    }
+
+    if(notice) notice.textContent=response==='AVAILABLE'?'Availability saved ✓':'Marked as not available.';
+    renderFixtures();
+  }catch(e){
+    if(notice) notice.textContent=e.message||'Could not save availability';
   }
 }
 
