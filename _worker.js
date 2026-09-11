@@ -329,6 +329,82 @@ export default {
       });
     }
 
+
+    if (
+      url.pathname === "/api/tnf/weighin" ||
+      url.pathname === "/api/tnf/weighin/"
+    ) {
+      const email = getAccessEmail();
+
+      if (!email) {
+        return json({
+          success: false,
+          error: "Authenticated member email not found"
+        }, 401);
+      }
+
+      const result = await callMembersApi({
+        action: "tnf_weighin_admin",
+        email
+      });
+
+      return new Response(result.body, {
+        status: result.status,
+        headers: {
+          "content-type": "application/json; charset=UTF-8",
+          "cache-control": "no-store"
+        }
+      });
+    }
+
+    if (
+      url.pathname === "/api/tnf/results" ||
+      url.pathname === "/api/tnf/results/"
+    ) {
+      if (request.method !== "POST") {
+        return json({
+          success: false,
+          error: "POST required"
+        }, 405);
+      }
+
+      const email = getAccessEmail();
+
+      if (!email) {
+        return json({
+          success: false,
+          error: "Authenticated member email not found"
+        }, 401);
+      }
+
+      let body = {};
+
+      try {
+        body = await request.json();
+      } catch (error) {
+        return json({
+          success: false,
+          error: "Invalid JSON"
+        }, 400);
+      }
+
+      const result = await callMembersApi({
+        action: "tnf_publish_weekly_results",
+        email,
+        sessionId: body.sessionId || "",
+        winningTeam: body.winningTeam || "",
+        results: Array.isArray(body.results) ? body.results : []
+      });
+
+      return new Response(result.body, {
+        status: result.status,
+        headers: {
+          "content-type": "application/json; charset=UTF-8",
+          "cache-control": "no-store"
+        }
+      });
+    }
+
     if (
       url.pathname === "/api/tnf/respond" ||
       url.pathname === "/api/tnf/respond/"
