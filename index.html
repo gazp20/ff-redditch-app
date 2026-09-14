@@ -21,7 +21,7 @@ h1{font-size:24px;margin:7px 0}h2{font-size:18px;margin:6px 0 10px}h3{font-size:
 .choice{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:13px}.stack{display:grid;gap:8px}
 .stats5{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:12px}.mini{background:#101114;border:1px solid var(--line);border-radius:12px;text-align:center;padding:10px 4px}.mini b{font-size:19px;display:block}.mini small{font-size:9px;color:var(--muted)}
 table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:9px 4px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-size:10px;text-transform:uppercase}
-input{width:76px;background:#0e0f11;border:1px solid #3c4047;color:#fff;border-radius:8px;padding:8px} select,.field-input{width:100%;background:#0e0f11;border:1px solid #3c4047;color:#fff;border-radius:10px;padding:11px;font:inherit}.payment-total{font-size:36px;line-height:1;font-weight:950;margin:6px 0}.charge-meta{font-size:11px;color:var(--muted);margin-top:3px}.admin-pay-row{padding:10px 0;border-bottom:1px solid #2c3037}.admin-pay-row:last-child{border-bottom:0}.fine-panel{display:none}.fine-panel.open{display:block}.toggle{background:#292c32;color:#aaa;border:1px solid #3c4047;border-radius:8px;padding:7px}.toggle.on{background:#183b28;color:#8be8ad}
+input{width:76px;background:#0e0f11;border:1px solid #3c4047;color:#fff;border-radius:8px;padding:8px} select,.field-input{width:100%;background:#0e0f11;border:1px solid #3c4047;color:#fff;border-radius:10px;padding:11px;font:inherit}.payment-total{font-size:36px;line-height:1;font-weight:950;margin:6px 0}.charge-meta{font-size:11px;color:var(--muted);margin-top:3px}.admin-pay-row{padding:10px 0;border-bottom:1px solid #2c3037}.admin-pay-row:last-child{border-bottom:0}.payment-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.payment-action-btn{border:1px solid #4a4f58;border-radius:9px;padding:8px 11px;background:#292c32;color:#fff;font-weight:850;font-size:11px;cursor:pointer;min-width:64px}.payment-action-btn:disabled{opacity:.45;cursor:wait}.payment-action-btn[data-action="VOID"]{border-color:#7a3737;color:#ff9b9b}.payment-action-btn[data-action="WAIVE"]{border-color:#6b5a2a;color:#f2d778}.payment-action-btn[data-action="CASH"]{border-color:#2f6847;color:#8be8ad}.fine-panel{display:none}.fine-panel.open{display:block}.toggle{background:#292c32;color:#aaa;border:1px solid #3c4047;border-radius:8px;padding:7px}.toggle.on{background:#183b28;color:#8be8ad}
 .adminrow{display:grid;grid-template-columns:1fr auto;gap:8px;padding:11px 0;border-bottom:1px solid var(--line)}
 nav{position:fixed;bottom:0;left:0;right:0;z-index:6;background:#111215;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(7,1fr);padding-bottom:env(safe-area-inset-bottom)}
 nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:9px}.navicon{font-size:18px;display:block;margin-bottom:3px}nav button.active{color:var(--gold)}
@@ -831,7 +831,23 @@ function renderAdminPayments(){
   const players=(currentAdminPayments.players||[]).filter(p=>Number(p.totalDue||0)>0);
   if(sum)sum.textContent=`${players.length} player${players.length===1?'':'s'} owing · £${Number(currentAdminPayments.totalDue||0).toFixed(2)} outstanding`;
   if(!wrap)return;
-  wrap.innerHTML=players.length?players.map(p=>`<div class="admin-pay-row"><div class="row"><span><b>${escapeHtml(p.name)}</b><span class="charge-meta">${(p.dueItems||[]).map(x=>escapeHtml(x.description||x.type)).join(' · ')}</span></span><b class="red">£${Number(p.totalDue||0).toFixed(2)}</b></div>${(p.dueItems||[]).map(item=>`<div class="row" style="margin-top:7px;gap:8px"><span class="muted" style="font-size:11px;flex:1">${escapeHtml(item.description||item.type)} · £${Number(item.amount||0).toFixed(2)}</span><button class="toggle" onclick="settleCharge('${encodeURIComponent(item.chargeId)}','CASH')">CASH</button><button class="toggle" onclick="settleCharge('${encodeURIComponent(item.chargeId)}','WAIVE')">WAIVE</button><button class="toggle" onclick="settleCharge('${encodeURIComponent(item.chargeId)}','VOID')">VOID</button></div>`).join('')}</div>`).join(''):'<div class="muted">Nobody owes anything ✓</div>';
+  wrap.innerHTML=players.length?players.map(p=>`<div class="admin-pay-row"><div class="row"><span><b>${escapeHtml(p.name)}</b><span class="charge-meta">${(p.dueItems||[]).map(x=>escapeHtml(x.description||x.type)).join(' · ')}</span></span><b class="red">£${Number(p.totalDue||0).toFixed(2)}</b></div>${(p.dueItems||[]).map(item=>`<div style="margin-top:9px"><div class="muted" style="font-size:11px">${escapeHtml(item.description||item.type)} · £${Number(item.amount||0).toFixed(2)}</div><div class="payment-actions"><button type="button" class="payment-action-btn" data-charge-id="${encodeURIComponent(item.chargeId)}" data-action="CASH">CASH</button><button type="button" class="payment-action-btn" data-charge-id="${encodeURIComponent(item.chargeId)}" data-action="WAIVE">WAIVE</button><button type="button" class="payment-action-btn" data-charge-id="${encodeURIComponent(item.chargeId)}" data-action="VOID">VOID</button></div></div>`).join('')}</div>`).join(''):'<div class="muted">Nobody owes anything ✓</div>';
+  if(!wrap.dataset.paymentActionsBound){
+    wrap.dataset.paymentActionsBound='1';
+    wrap.addEventListener('click',async function(e){
+      const btn=e.target.closest('.payment-action-btn');
+      if(!btn||!wrap.contains(btn))return;
+      e.preventDefault(); e.stopPropagation();
+      const chargeId=btn.dataset.chargeId||''; const action=btn.dataset.action||'';
+      if(!chargeId||!action)return;
+      const label=btn.textContent;
+      wrap.querySelectorAll('.payment-action-btn').forEach(b=>b.disabled=true);
+      btn.textContent='WORKING…';
+      try{await settleCharge(chargeId,action);}finally{
+        if(document.body.contains(btn)){btn.textContent=label;wrap.querySelectorAll('.payment-action-btn').forEach(b=>b.disabled=false);}
+      }
+    });
+  }
 }
 async function issueFine(){
   const email=document.getElementById('finePlayer')?.value||''; const i=Number(document.getElementById('fineReason')?.value||0); const opt=FINE_OPTIONS[i]||FINE_OPTIONS[0];
@@ -842,8 +858,15 @@ async function issueFine(){
   try{const res=await fetch('/api/payments/fine',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({playerEmail:email,description,amount})});const data=await res.json();if(!res.ok||!data.success)throw new Error(data.error||'Could not add fine');if(notice)notice.textContent='Fine added ✓';await Promise.all([loadAdminPayments(),loadPayments()]);}catch(e){if(notice)notice.textContent=e.message||'Could not add fine';}
 }
 async function settleCharge(encodedId,action){
-  const chargeId=decodeURIComponent(encodedId); if(!chargeId)return;
-  try{const res=await fetch('/api/payments/status',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({chargeId,action})});const data=await res.json();if(!res.ok||!data.success)throw new Error(data.error||'Could not update charge');await Promise.all([loadAdminPayments(),loadPayments()]);}catch(e){alert(e.message||'Could not update charge');}
+  const chargeId=decodeURIComponent(encodedId); if(!chargeId)return false;
+  try{
+    const res=await fetch('/api/payments/status',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({chargeId,action})});
+    const text=await res.text(); let data={};
+    try{data=text?JSON.parse(text):{};}catch(_){throw new Error('Payment update returned an invalid response');}
+    if(!res.ok||!data.success)throw new Error(data.error||'Could not update charge');
+    await Promise.all([loadAdminPayments(),loadPayments()]);
+    return true;
+  }catch(e){alert(e.message||'Could not update charge');return false;}
 }
 
 function renderFixtures(){
