@@ -72,7 +72,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 </style>
 </head>
 <body>
-<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.8.11 · FOOTBALL SIDE FINAL</div></header>
+<header><div class="brand"><b>FF REDDITCH</b> · THE CHANGING ROOM</div><div class="sub">APP BUILD v0.9.1 · FOOTBALL SIDE FINAL</div></header>
 <main>
 <section id="home" class="screen active">
 <div class="hero"><div class="eyebrow" id="homeWelcome">WELCOME BACK</div><h1>Your FF Redditch</h1><div class="muted">Football · Fitness · Community</div></div>
@@ -135,7 +135,6 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
       <div class="muted" id="nextTnfMeta">Loading next week's session</div>
       <div class="muted" id="nextTnfSpaces" style="margin-top:3px"></div>
     </div>
-    <span class="pill" id="nextTnfMyStatus">NO REPLY</span>
   </div>
   <div class="choice">
     <button id="nextTnfInBtn" class="btn btn-green" onclick="saveTnfResponseFor('NEXT','IN')">✓ I'M IN</button>
@@ -1630,7 +1629,6 @@ async function loadTnf(){
       document.getElementById('nextTnfDate').textContent=formatTnfDate(n.date);
       document.getElementById('nextTnfMeta').textContent=n.time+' · '+n.venue+' · '+nCount+'/'+nCapacity+' playing';
       document.getElementById('nextTnfSpaces').textContent=n.full?'Session full':nRemaining+' spaces remaining';
-      setStatusPill(document.getElementById('nextTnfMyStatus'),n.myResponse);
       setTnfVoteButtons(document.getElementById('nextTnfInBtn'),document.getElementById('nextTnfOutBtn'),n.myResponse);
     }else{
       nextCard.style.display='none';
