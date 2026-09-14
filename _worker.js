@@ -312,6 +312,23 @@ export default {
       });
     }
 
+    if (url.pathname === "/api/payments" || url.pathname === "/api/payments/") {
+      const email=getAccessEmail(); if(!email)return json({success:false,error:"Authenticated member email not found"},401);
+      const result=await callMembersApi({action:"payments_my",email});return new Response(result.body,{status:result.status,headers:{"content-type":"application/json; charset=UTF-8","cache-control":"no-store"}});
+    }
+    if (url.pathname === "/api/payments/admin" || url.pathname === "/api/payments/admin/") {
+      const email=getAccessEmail(); if(!email)return json({success:false,error:"Authenticated member email not found"},401);
+      const result=await callMembersApi({action:"payments_admin",email});return new Response(result.body,{status:result.status,headers:{"content-type":"application/json; charset=UTF-8","cache-control":"no-store"}});
+    }
+    if (url.pathname === "/api/payments/fine" || url.pathname === "/api/payments/fine/") {
+      if(request.method!=="POST")return json({success:false,error:"POST required"},405);const email=getAccessEmail();if(!email)return json({success:false,error:"Authenticated member email not found"},401);let input={};try{input=await request.json();}catch(e){return json({success:false,error:"Invalid JSON"},400);}
+      const result=await callMembersApi({action:"payments_add_fine",email,playerEmail:input.playerEmail||"",description:input.description||"",amount:Number(input.amount||0)});return new Response(result.body,{status:result.status,headers:{"content-type":"application/json; charset=UTF-8","cache-control":"no-store"}});
+    }
+    if (url.pathname === "/api/payments/status" || url.pathname === "/api/payments/status/") {
+      if(request.method!=="POST")return json({success:false,error:"POST required"},405);const email=getAccessEmail();if(!email)return json({success:false,error:"Authenticated member email not found"},401);let input={};try{input=await request.json();}catch(e){return json({success:false,error:"Invalid JSON"},400);}
+      const result=await callMembersApi({action:"payments_settle",email,chargeId:input.chargeId||"",command:input.action||""});return new Response(result.body,{status:result.status,headers:{"content-type":"application/json; charset=UTF-8","cache-control":"no-store"}});
+    }
+
     if (
       url.pathname === "/api/tnf/next" ||
       url.pathname === "/api/tnf/next/"
