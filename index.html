@@ -265,8 +265,8 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 
 <div class="card">
   <div class="eyebrow">ONLINE PAYMENT</div>
-  <button class="btn btn-gold" style="width:100%" disabled>PAY BALANCE · STRIPE COMING NEXT</button>
-  <div class="muted" style="font-size:11px;margin-top:8px">TNF is £5.50 when you vote IN. 11s is £6.50 when you are selected in a published squad.</div>
+  <button id="payFullBalanceBtn" class="btn btn-gold" style="width:100%" onclick="startStripePayment('BALANCE')" disabled>PAY FULL BALANCE · £0.00</button>
+  <div id="paymentOnlineNotice" class="muted" style="font-size:11px;margin-top:8px">Stripe setup pending. Payment buttons are ready and will be activated when the club account is connected.</div>
 </div>
 </section>
 
@@ -794,9 +794,21 @@ function renderPayments(){
   const hist=document.getElementById('paymentsHistory');
   if(total) total.textContent=`£${Number(currentPayments.totalDue||0).toFixed(2)}`;
   const dueItems=Array.isArray(currentPayments.dueItems)?currentPayments.dueItems:[];
-  if(due) due.innerHTML=dueItems.length?dueItems.map(item=>`<div class="listrow row"><span><b>${escapeHtml(paymentDescription(item))}</b><span class="charge-meta">${escapeHtml(item.dateLabel||'')} · ${escapeHtml(item.type||'CHARGE')}</span></span><b class="red">£${Number(item.amount||0).toFixed(2)}</b></div>`).join(''):'<div class="muted">Nothing outstanding ✓</div>';
+  if(due) due.innerHTML=dueItems.length?dueItems.map(item=>`<div class="listrow"><div class="row"><span><b>${escapeHtml(paymentDescription(item))}</b><span class="charge-meta">${escapeHtml(item.dateLabel||'')} · ${escapeHtml(item.type||'CHARGE')}</span></span><b class="red">£${Number(item.amount||0).toFixed(2)}</b></div><button class="btn btn-gold" style="width:100%;margin-top:8px" onclick="startStripePayment('ITEM','${escapeHtml(item.id||item.chargeId||'')}')" disabled>PAY £${Number(item.amount||0).toFixed(2)}</button></div>`).join(''):'<div class="muted">Nothing outstanding ✓</div>';
+  const fullBtn=document.getElementById('payFullBalanceBtn');
+  if(fullBtn){
+    const amount=Number(currentPayments.totalDue||0);
+    fullBtn.textContent=`PAY FULL BALANCE · £${amount.toFixed(2)}`;
+    fullBtn.disabled=true;
+  }
   const history=Array.isArray(currentPayments.history)?currentPayments.history:[];
   if(hist) hist.innerHTML=history.length?history.slice(0,30).map(item=>`<div class="listrow row"><span><b>${escapeHtml(paymentDescription(item))}</b><span class="charge-meta">${escapeHtml(item.dateLabel||'')} · ${escapeHtml(paymentStatusLabel(item.status))}</span></span><b class="${item.status==='DUE'?'red':'green'}">£${Number(item.amount||0).toFixed(2)}</b></div>`).join(''):'<div class="muted">No payment history yet.</div>';
+}
+
+
+function startStripePayment(mode,chargeId){
+  const notice=document.getElementById('paymentOnlineNotice');
+  if(notice) notice.textContent='Stripe is not connected yet. Payment buttons will activate once the new account is ready.';
 }
 
 const FINE_OPTIONS=[
