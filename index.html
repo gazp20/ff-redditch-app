@@ -21,7 +21,7 @@ h1{font-size:24px;margin:7px 0}h2{font-size:18px;margin:6px 0 10px}h3{font-size:
 .choice{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:13px}.stack{display:grid;gap:8px}
 .stats5{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:12px}.mini{background:#101114;border:1px solid var(--line);border-radius:12px;text-align:center;padding:10px 4px}.mini b{font-size:19px;display:block}.mini small{font-size:9px;color:var(--muted)}
 table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:9px 4px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-size:10px;text-transform:uppercase}
-input{width:76px;background:#0e0f11;border:1px solid #3c4047;color:#fff;border-radius:8px;padding:8px}.toggle{background:#292c32;color:#aaa;border:1px solid #3c4047;border-radius:8px;padding:7px}.toggle.on{background:#183b28;color:#8be8ad}
+input{width:76px;background:#0e0f11;border:1px solid #3c4047;color:#fff;border-radius:8px;padding:8px} select,.field-input{width:100%;background:#0e0f11;border:1px solid #3c4047;color:#fff;border-radius:10px;padding:11px;font:inherit}.payment-total{font-size:36px;line-height:1;font-weight:950;margin:6px 0}.charge-meta{font-size:11px;color:var(--muted);margin-top:3px}.admin-pay-row{padding:10px 0;border-bottom:1px solid #2c3037}.admin-pay-row:last-child{border-bottom:0}.fine-panel{display:none}.fine-panel.open{display:block}.toggle{background:#292c32;color:#aaa;border:1px solid #3c4047;border-radius:8px;padding:7px}.toggle.on{background:#183b28;color:#8be8ad}
 .adminrow{display:grid;grid-template-columns:1fr auto;gap:8px;padding:11px 0;border-bottom:1px solid var(--line)}
 nav{position:fixed;bottom:0;left:0;right:0;z-index:6;background:#111215;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(7,1fr);padding-bottom:env(safe-area-inset-bottom)}
 nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:9px}.navicon{font-size:18px;display:block;margin-bottom:3px}nav button.active{color:var(--gold)}
@@ -248,19 +248,26 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 <section id="payments" class="screen">
 <div class="hero">
   <div class="eyebrow">PAYMENTS</div>
-  <h1 id="paymentsDueTitle">£0.00 due</h1>
-  <div class="muted">TNF · 11s/Friendlies · Fines</div>
+  <div class="payment-total" id="paymentsDueTitle">£0.00</div>
+  <div class="muted">OUTSTANDING BALANCE</div>
 </div>
 
 <div class="card">
-  <div class="eyebrow">11s · MATCH SUBS</div>
-  <h2>Your selected fixtures</h2>
-  <div id="elevenSubsList"><div class="muted">Loading 11s subs…</div></div>
+  <div class="eyebrow">WHAT YOU OWE</div>
+  <h2>Balance breakdown</h2>
+  <div id="paymentsDueList"><div class="muted">Loading charges…</div></div>
 </div>
 
 <div class="card">
-  <div class="eyebrow">PAYMENT COLLECTION</div>
-  <div class="muted">The payment method itself is the next stage. Squad selection now creates the £6 match-sub item automatically.</div>
+  <div class="eyebrow">PAYMENT HISTORY</div>
+  <h2>Your account</h2>
+  <div id="paymentsHistory"><div class="muted">Loading history…</div></div>
+</div>
+
+<div class="card">
+  <div class="eyebrow">ONLINE PAYMENT</div>
+  <button class="btn btn-gold" style="width:100%" disabled>PAY BALANCE · STRIPE COMING NEXT</button>
+  <div class="muted" style="font-size:11px;margin-top:8px">TNF is £5.50 when you vote IN. 11s is £6.50 when you are selected in a published squad.</div>
 </div>
 </section>
 
@@ -359,14 +366,44 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 <div id="admin11Forecast"><div class="muted" style="padding:12px 0">Loading availability…</div></div>
 </div>
 
+<div class="card" id="adminPaymentsCard">
+  <div class="eyebrow">PAYMENTS & FINES</div>
+  <div class="row">
+    <div>
+      <h2>Player balances</h2>
+      <div class="muted" id="adminPaymentsSummary">Loading balances…</div>
+    </div>
+    <button class="btn btn-gold" onclick="toggleFinePanel()">FINE PLAYER</button>
+  </div>
+
+  <div id="finePanel" class="fine-panel" style="margin-top:12px">
+    <div class="card" style="padding:12px;margin:0;background:#131519">
+      <div class="muted" style="margin-bottom:6px">PLAYER</div>
+      <select id="finePlayer"></select>
+      <div class="muted" style="margin:10px 0 6px">FINE</div>
+      <select id="fineReason" onchange="updateFineAmount()"></select>
+      <div class="muted" style="margin:10px 0 6px">AMOUNT</div>
+      <input id="fineAmount" class="field-input" inputmode="decimal" value="1.00">
+      <div id="customFineWrap" style="display:none">
+        <div class="muted" style="margin:10px 0 6px">DESCRIPTION</div>
+        <input id="fineCustomDescription" class="field-input" style="width:100%" placeholder="Fine description">
+      </div>
+      <button class="btn btn-red" style="width:100%;margin-top:12px" onclick="issueFine()">ISSUE FINE</button>
+      <div class="muted" id="fineNotice" style="font-size:11px;margin-top:8px"></div>
+    </div>
+  </div>
+
+  <div id="adminPaymentsPlayers" style="margin-top:12px"><div class="muted">Loading player balances…</div></div>
+</div>
+
 <div class="grid">
   <div class="card"><div class="muted">TNF IN</div><div class="big green" id="adminTopTnfIn">—</div></div>
   <div class="card"><div class="muted">TEAMS</div><div class="big" id="adminTopTnfTeams">—</div></div>
-  <div class="card"><div class="muted">Collected</div><div class="big">£85</div></div>
-  <div class="card"><div class="muted">Owed</div><div class="big red">£15</div></div>
+  <div class="card"><div class="muted">Collected</div><div class="big" id="adminCollectedTotal">£0</div></div>
+  <div class="card"><div class="muted">Owed</div><div class="big red" id="adminOwedTotal">£0</div></div>
 </div>
 
-<div class="card stack"><button class="btn btn-dark">Create / Edit TNF Session</button><button class="btn btn-dark" onclick="document.getElementById('adminTnfTitle').scrollIntoView({behavior:'smooth',block:'start'})">Allocate TNF Teams</button><button class="btn btn-dark">Add Fine</button><button class="btn btn-dark">11s Match Admin</button><button class="btn btn-dark">Payments & Outstanding</button></div>
+<div class="card stack"><button class="btn btn-dark">Create / Edit TNF Session</button><button class="btn btn-dark" onclick="document.getElementById('adminTnfTitle').scrollIntoView({behavior:'smooth',block:'start'})">Allocate TNF Teams</button><button class="btn btn-dark" onclick="document.getElementById('adminPaymentsCard').scrollIntoView({behavior:'smooth'});toggleFinePanel(true)">Fine Player</button><button class="btn btn-dark">11s Match Admin</button><button class="btn btn-dark" onclick="document.getElementById('adminPaymentsCard').scrollIntoView({behavior:'smooth'})">Payments & Outstanding</button></div>
 </section>
 
 <section id="more" class="screen"><div class="hero"><div class="eyebrow">MORE</div><h1>Club Hub</h1></div><div class="card stack"><button class="btn btn-dark">🍽 Matchday Fuel</button><button class="btn btn-dark">📖 FFR Rule Book</button><button class="btn btn-dark">📰 Club News</button><button class="btn btn-dark">👕 Kit Bag</button><button class="btn btn-dark">👤 Account</button></div></section>
@@ -395,6 +432,8 @@ let showAll11Fixtures = false;
 let currentAdmin11s = null;
 let admin11SquadDrafts = {};
 let current11sSubs = {totalDue:0,items:[]};
+let currentPayments = {totalDue:0,dueItems:[],history:[]};
+let currentAdminPayments = {members:[],players:[],totalDue:0,totalCollected:0};
 let openAdminFixtureId = '';
 let showAllAdmin11Fixtures = false;
 let currentRankings = [];
@@ -414,12 +453,9 @@ function go(id){
   // Admin data must always be fresh when the admin page is opened.
   // This picks up players who have voted IN since this app was first loaded.
   if(id==='admin' && currentMember && isAdminMember()){
-    Promise.allSettled([
-      loadAdminTnf(),
-      loadTnfWeighIn(),
-      loadAdmin11s()
-    ]);
+    Promise.allSettled([loadAdminTnf(),loadTnfWeighIn(),loadAdmin11s(),loadAdminPayments()]);
   }
+  if(id==='payments' && currentMember){ loadPayments(); }
 }
 
 function formatTnfDate(dateText){
@@ -676,7 +712,7 @@ async function save11Squad(encodedFixtureId,published){
 
     if(notice){
       notice.textContent=published
-        ? 'Squad published ✓ £6 subs created for Selected players only.'
+        ? 'Squad published ✓ £6.50 charge created for Selected players only.'
         : 'Squad draft saved ✓';
     }
   }catch(e){
@@ -729,6 +765,86 @@ function render11sSubs(){
       </b>
     </div>
   `).join('');
+}
+
+
+async function loadPayments(){
+  try{
+    const res=await fetch('/api/payments',{cache:'no-store'});
+    const data=await res.json();
+    if(!res.ok||!data.success) throw new Error(data.error||'Could not load payments');
+    currentPayments=data;
+  }catch(e){
+    currentPayments={totalDue:0,dueItems:[],history:[],error:e.message};
+  }
+  renderPayments();
+}
+
+function paymentStatusLabel(status){
+  const s=String(status||'').toUpperCase();
+  if(s==='PAID_CASH') return 'PAID · CASH';
+  if(s==='PAID_STRIPE') return 'PAID · STRIPE';
+  if(s==='WAIVED') return 'WAIVED';
+  if(s==='VOID') return 'VOID';
+  return 'DUE';
+}
+function paymentDescription(item){ return item.description||item.type||'Club charge'; }
+function renderPayments(){
+  const total=document.getElementById('paymentsDueTitle');
+  const due=document.getElementById('paymentsDueList');
+  const hist=document.getElementById('paymentsHistory');
+  if(total) total.textContent=`£${Number(currentPayments.totalDue||0).toFixed(2)}`;
+  const dueItems=Array.isArray(currentPayments.dueItems)?currentPayments.dueItems:[];
+  if(due) due.innerHTML=dueItems.length?dueItems.map(item=>`<div class="listrow row"><span><b>${escapeHtml(paymentDescription(item))}</b><span class="charge-meta">${escapeHtml(item.dateLabel||'')} · ${escapeHtml(item.type||'CHARGE')}</span></span><b class="red">£${Number(item.amount||0).toFixed(2)}</b></div>`).join(''):'<div class="muted">Nothing outstanding ✓</div>';
+  const history=Array.isArray(currentPayments.history)?currentPayments.history:[];
+  if(hist) hist.innerHTML=history.length?history.slice(0,30).map(item=>`<div class="listrow row"><span><b>${escapeHtml(paymentDescription(item))}</b><span class="charge-meta">${escapeHtml(item.dateLabel||'')} · ${escapeHtml(paymentStatusLabel(item.status))}</span></span><b class="${item.status==='DUE'?'red':'green'}">£${Number(item.amount||0).toFixed(2)}</b></div>`).join(''):'<div class="muted">No payment history yet.</div>';
+}
+
+const FINE_OPTIONS=[
+  ['Late arrival (<15 mins)','1.00'],['No pub after home game','0.50'],['Subs not paid by deadline','1.00'],['Late cancellation (<24h)','2.00'],['Forgot kit','1.00'],['Yellow card','2.00'],['Red card','5.00'],['Missed penalty','1.00'],['Not participating in warm-up','0.50'],['Megged in warm-up','0.50'],['Ball over fence in warm-up','0.50'],["Skipper's clause",'1.00'],['Other / Custom','1.00']
+];
+function toggleFinePanel(forceOpen){
+  const el=document.getElementById('finePanel'); if(!el)return;
+  if(forceOpen===true)el.classList.add('open'); else el.classList.toggle('open');
+}
+function populateFineForm(){
+  const p=document.getElementById('finePlayer'),r=document.getElementById('fineReason');
+  if(p){p.innerHTML=(currentAdminPayments.members||[]).map(m=>`<option value="${escapeHtml(m.email)}">${escapeHtml(m.name)}</option>`).join('');}
+  if(r){r.innerHTML=FINE_OPTIONS.map((x,i)=>`<option value="${i}">${escapeHtml(x[0])} · £${x[1]}</option>`).join('');updateFineAmount();}
+}
+function updateFineAmount(){
+  const r=document.getElementById('fineReason'),a=document.getElementById('fineAmount'),c=document.getElementById('customFineWrap'); if(!r||!a)return;
+  const opt=FINE_OPTIONS[Number(r.value)||0]; a.value=opt?opt[1]:'1.00'; if(c)c.style.display=(opt&&opt[0]==='Other / Custom')?'block':'none';
+}
+async function loadAdminPayments(){
+  if(!currentMember||!isAdminMember())return;
+  try{
+    const res=await fetch('/api/payments/admin',{cache:'no-store'}); const data=await res.json();
+    if(!res.ok||!data.success)throw new Error(data.error||'Could not load admin payments'); currentAdminPayments=data;
+  }catch(e){currentAdminPayments={members:[],players:[],totalDue:0,totalCollected:0,error:e.message};}
+  renderAdminPayments(); populateFineForm();
+}
+function renderAdminPayments(){
+  const sum=document.getElementById('adminPaymentsSummary'),wrap=document.getElementById('adminPaymentsPlayers');
+  const owed=document.getElementById('adminOwedTotal'),col=document.getElementById('adminCollectedTotal');
+  if(owed)owed.textContent=`£${Number(currentAdminPayments.totalDue||0).toFixed(2)}`;
+  if(col)col.textContent=`£${Number(currentAdminPayments.totalCollected||0).toFixed(2)}`;
+  const players=(currentAdminPayments.players||[]).filter(p=>Number(p.totalDue||0)>0);
+  if(sum)sum.textContent=`${players.length} player${players.length===1?'':'s'} owing · £${Number(currentAdminPayments.totalDue||0).toFixed(2)} outstanding`;
+  if(!wrap)return;
+  wrap.innerHTML=players.length?players.map(p=>`<div class="admin-pay-row"><div class="row"><span><b>${escapeHtml(p.name)}</b><span class="charge-meta">${(p.dueItems||[]).map(x=>escapeHtml(x.description||x.type)).join(' · ')}</span></span><b class="red">£${Number(p.totalDue||0).toFixed(2)}</b></div>${(p.dueItems||[]).map(item=>`<div class="row" style="margin-top:7px;gap:8px"><span class="muted" style="font-size:11px;flex:1">${escapeHtml(item.description||item.type)} · £${Number(item.amount||0).toFixed(2)}</span><button class="toggle" onclick="settleCharge('${encodeURIComponent(item.chargeId)}','CASH')">CASH</button><button class="toggle" onclick="settleCharge('${encodeURIComponent(item.chargeId)}','WAIVE')">WAIVE</button><button class="toggle" onclick="settleCharge('${encodeURIComponent(item.chargeId)}','VOID')">VOID</button></div>`).join('')}</div>`).join(''):'<div class="muted">Nobody owes anything ✓</div>';
+}
+async function issueFine(){
+  const email=document.getElementById('finePlayer')?.value||''; const i=Number(document.getElementById('fineReason')?.value||0); const opt=FINE_OPTIONS[i]||FINE_OPTIONS[0];
+  let description=opt[0]; if(description==='Other / Custom')description=(document.getElementById('fineCustomDescription')?.value||'Custom fine').trim();
+  const amount=Number(document.getElementById('fineAmount')?.value||0); const notice=document.getElementById('fineNotice');
+  if(!email||!description||!(amount>0)){if(notice)notice.textContent='Choose a player, fine and valid amount.';return;}
+  if(notice)notice.textContent='Adding fine…';
+  try{const res=await fetch('/api/payments/fine',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({playerEmail:email,description,amount})});const data=await res.json();if(!res.ok||!data.success)throw new Error(data.error||'Could not add fine');if(notice)notice.textContent='Fine added ✓';await Promise.all([loadAdminPayments(),loadPayments()]);}catch(e){if(notice)notice.textContent=e.message||'Could not add fine';}
+}
+async function settleCharge(encodedId,action){
+  const chargeId=decodeURIComponent(encodedId); if(!chargeId)return;
+  try{const res=await fetch('/api/payments/status',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({chargeId,action})});const data=await res.json();if(!res.ok||!data.success)throw new Error(data.error||'Could not update charge');await Promise.all([loadAdminPayments(),loadPayments()]);}catch(e){alert(e.message||'Could not update charge');}
 }
 
 function renderFixtures(){
@@ -1004,7 +1120,7 @@ function renderAdmin11s(){
           </div>
 
           <div id="admin11SquadNotice-${escapeHtml(f.fixtureId)}" class="muted" style="margin-top:7px">
-            ${published?'Published squad creates £6 match subs for Selected players only.':'Publishing posts Selected + Reserve. £6 subs are created for Selected players only.'}
+            ${published?'Published squad creates £6.50 charges for Selected players only.':'Publishing posts Selected + Reserve. £6.50 charges are created for Selected players only.'}
           </div>
         </div>
       </div>`:''}
@@ -1987,7 +2103,7 @@ function selectPlayer(btn){
   btn.textContent=btn.classList.contains('on')?'Selected':'Select';
 }
 function confirmSquad(){
-  alert('Prototype: squad confirmed. In the real app, selected players now receive their £6 match fee and a selection notification.');
+  alert('Prototype: squad confirmed. In the real app, selected players now receive their £6.50 match fee and a selection notification.');
 }
 
   Promise.allSettled([
@@ -1999,7 +2115,9 @@ function confirmSquad(){
   loadAdmin11s(),
   loadAdminTnf(),
   loadTnfWeighIn(),
-  load11sSubs()
+  load11sSubs(),
+  loadPayments(),
+  loadAdminPayments()
 ]);
 </script>
 </body></html>
