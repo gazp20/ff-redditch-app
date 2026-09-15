@@ -69,7 +69,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 .week-control{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 @media(max-width:520px){.home-tnf-status{min-width:92px;font-size:14px;padding:9px 10px}.week-control{grid-template-columns:1fr}}
 
-/* ===== TRACKING PROTOTYPE v0.9.11 (LOCAL ONLY) ===== */
+/* ===== TRACKING PROTOTYPE v0.9.12 (LOCAL ONLY) ===== */
 .track-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
 .track-stat{background:#111318;border:1px solid var(--line);border-radius:10px;padding:10px}
 .track-stat .big{font-size:20px}
@@ -81,7 +81,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 @media(max-width:520px){.track-grid{grid-template-columns:1fr 1fr}.track-grid .track-stat:last-child{grid-column:1/-1}.track-search{flex-direction:column}}
 
 
-/* v0.9.11 — Club Hub alignment + Tracking WIP */
+/* v0.9.12 — Club Hub alignment + Tracking WIP */
 .club-hub-list .btn,
 .club-hub-list button,
 .club-hub-list a {
@@ -947,7 +947,20 @@ function toggleFinePanel(forceOpen){
 }
 function toggleCreditPanel(forceOpen){
   const el=document.getElementById('creditPanel'); if(!el)return;
-  if(forceOpen===true)el.classList.add('open'); else el.classList.toggle('open');
+  const opening=forceOpen===true||!el.classList.contains('open');
+  if(opening){
+    el.classList.add('open');
+    populateCreditPlayers();
+  }else{
+    el.classList.remove('open');
+  }
+}
+function populateCreditPlayers(){
+  const cp=document.getElementById('creditPlayer'); if(!cp)return;
+  const members=(currentAdminPayments&&currentAdminPayments.members)||[];
+  const selected=cp.value;
+  cp.innerHTML=members.map(m=>`<option value="${escapeHtml(m.email)}">${escapeHtml(m.name)}</option>`).join('');
+  if(selected&&members.some(m=>m.email===selected))cp.value=selected;
 }
 function updateCreditReason(){
   const r=document.getElementById('creditReason'),w=document.getElementById('creditCustomWrap');
@@ -958,6 +971,7 @@ function populateFineForm(){
   const options=(currentAdminPayments.members||[]).map(m=>`<option value="${escapeHtml(m.email)}">${escapeHtml(m.name)}</option>`).join('');
   if(p)p.innerHTML=options;
   if(cp)cp.innerHTML=options;
+  populateCreditPlayers();
   if(r){r.innerHTML=FINE_OPTIONS.map((x,i)=>`<option value="${i}">${escapeHtml(x[0])} · £${x[1]}</option>`).join('');updateFineAmount();}
 }
 function updateFineAmount(){
@@ -977,10 +991,10 @@ function renderAdminPayments(){
   const owed=document.getElementById('adminOwedTotal'),col=document.getElementById('adminCollectedTotal');
   if(owed)owed.textContent=`£${Number(currentAdminPayments.totalDue||0).toFixed(2)}`;
   if(col)col.textContent=`£${Number(currentAdminPayments.totalCollected||0).toFixed(2)}`;
-  const players=(currentAdminPayments.players||[]).filter(p=>Number(p.totalDue||0)>0||Number(p.creditBalance||0)>0);
+  const players=(currentAdminPayments.players||[]);
   if(sum)sum.textContent=`£${Number(currentAdminPayments.totalDue||0).toFixed(2)} outstanding · £${Number(currentAdminPayments.totalCredit||0).toFixed(2)} account credit available`;
   if(!wrap)return;
-  wrap.innerHTML=players.length?players.map(p=>`<div class="admin-pay-row"><div class="row"><span><b>${escapeHtml(p.name)}</b><span class="charge-meta">${Number(p.creditApplied||0)>0?`£${Number(p.creditApplied).toFixed(2)} credit applied · `:''}${(p.dueItems||[]).map(x=>escapeHtml(x.description||x.type)).join(' · ')}</span></span>${Number(p.totalDue||0)>0?`<b class="red">£${Number(p.totalDue||0).toFixed(2)} due</b>`:`<b class="green">£${Number(p.creditBalance||0).toFixed(2)} credit</b>`}</div>${(p.dueItems||[]).map(item=>`<div style="margin-top:9px"><div class="muted" style="font-size:11px">${escapeHtml(item.description||item.type)} · £${Number(item.amount||0).toFixed(2)}</div><div class="payment-actions"><button type="button" class="payment-action-btn" data-charge-id="${encodeURIComponent(item.chargeId)}" data-action="CASH">CASH</button><button type="button" class="payment-action-btn" data-charge-id="${encodeURIComponent(item.chargeId)}" data-action="WAIVE">WAIVE</button><button type="button" class="payment-action-btn" data-charge-id="${encodeURIComponent(item.chargeId)}" data-action="VOID">VOID</button></div></div>`).join('')}</div>`).join(''):'<div class="muted">Nobody owes anything and no unused account credit ✓</div>';
+  wrap.innerHTML=players.length?players.map(p=>`<div class="admin-pay-row"><div class="row"><span><b>${escapeHtml(p.name)}</b><span class="charge-meta">${Number(p.creditApplied||0)>0?`£${Number(p.creditApplied).toFixed(2)} credit applied · `:''}${(p.dueItems||[]).map(x=>escapeHtml(x.description||x.type)).join(' · ')}</span></span>${Number(p.totalDue||0)>0?`<b class="red">£${Number(p.totalDue||0).toFixed(2)} due</b>`:Number(p.creditBalance||0)>0?`<b class="green">£${Number(p.creditBalance||0).toFixed(2)} credit</b>`:`<b>£0.00</b>`}</div>${(p.dueItems||[]).map(item=>`<div style="margin-top:9px"><div class="muted" style="font-size:11px">${escapeHtml(item.description||item.type)} · £${Number(item.amount||0).toFixed(2)}</div><div class="payment-actions"><button type="button" class="payment-action-btn" data-charge-id="${encodeURIComponent(item.chargeId)}" data-action="CASH">CASH</button><button type="button" class="payment-action-btn" data-charge-id="${encodeURIComponent(item.chargeId)}" data-action="WAIVE">WAIVE</button><button type="button" class="payment-action-btn" data-charge-id="${encodeURIComponent(item.chargeId)}" data-action="VOID">VOID</button></div></div>`).join('')}</div>`).join(''):'<div class="muted">Nobody owes anything and no unused account credit ✓</div>';
   if(!wrap.dataset.paymentActionsBound){
     wrap.dataset.paymentActionsBound='1';
     wrap.addEventListener('click',async function(e){
