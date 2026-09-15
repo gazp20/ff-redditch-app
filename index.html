@@ -69,7 +69,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 .week-control{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 @media(max-width:520px){.home-tnf-status{min-width:92px;font-size:14px;padding:9px 10px}.week-control{grid-template-columns:1fr}}
 
-/* ===== TRACKING PROTOTYPE v0.9.15 (LOCAL ONLY) ===== */
+/* ===== TRACKING PROTOTYPE v0.9.16 (LOCAL ONLY) ===== */
 .track-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
 .track-stat{background:#111318;border:1px solid var(--line);border-radius:10px;padding:10px}
 .track-stat .big{font-size:20px}
@@ -81,7 +81,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 @media(max-width:520px){.track-grid{grid-template-columns:1fr 1fr}.track-grid .track-stat:last-child{grid-column:1/-1}.track-search{flex-direction:column}}
 
 
-/* v0.9.15 — Club Hub alignment + Tracking WIP */
+/* v0.9.16 — Club Hub alignment + Tracking WIP */
 .club-hub-list .btn,
 .club-hub-list button,
 .club-hub-list a {
@@ -136,6 +136,18 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
   line-height: 1.4;
   opacity: .9;
 }
+
+
+/* v0.9.16 Admin player-balance accordion */
+.admin-balance-player{border-top:1px solid rgba(255,255,255,.08)}
+.admin-balance-head{width:100%;display:grid;grid-template-columns:1fr auto 18px;gap:8px;align-items:center;
+  padding:10px 0;background:none;border:0;color:inherit;text-align:left;cursor:pointer}
+.admin-balance-name{font-weight:850}
+.admin-balance-amount{font-weight:850}
+.admin-balance-chevron{opacity:.55;text-align:right}
+.admin-balance-detail{display:none;padding:0 0 10px}
+.admin-balance-player.open .admin-balance-detail{display:block}
+.admin-balance-player.open .admin-balance-chevron{transform:rotate(180deg)}
 
 </style>
 </head>
@@ -1004,6 +1016,11 @@ async function loadAdminPayments(){
   }catch(e){currentAdminPayments={members:[],players:[],totalDue:0,totalCollected:0,error:e.message};}
   renderAdminPayments(); populateFineForm();
 }
+function toggleAdminBalancePlayer(idx){
+  const el=document.querySelector(`[data-balance-player="${idx}"]`);
+  if(el)el.classList.toggle('open');
+}
+
 function renderAdminPayments(){
   populateFineForm(); populateCreditPlayers();
   const sum=document.getElementById('adminPaymentsSummary'),wrap=document.getElementById('adminPaymentsPlayers');
@@ -1013,7 +1030,20 @@ function renderAdminPayments(){
   const players=(currentAdminPayments.players||[]);
   if(sum)sum.textContent=`£${Number(currentAdminPayments.totalDue||0).toFixed(2)} outstanding · £${Number(currentAdminPayments.totalCredit||0).toFixed(2)} account credit available`;
   if(!wrap)return;
-  wrap.innerHTML=players.length?players.map(p=>`<div class="admin-pay-row"><div class="row"><span><b>${escapeHtml(p.name)}</b><span class="charge-meta">${Number(p.creditApplied||0)>0?`£${Number(p.creditApplied).toFixed(2)} credit applied · `:''}${(p.dueItems||[]).map(x=>escapeHtml(x.description||x.type)).join(' · ')}</span></span>${Number(p.totalDue||0)>0?`<b class="red">£${Number(p.totalDue||0).toFixed(2)} due</b>`:Number(p.creditBalance||0)>0?`<b class="green">£${Number(p.creditBalance||0).toFixed(2)} credit</b>`:`<b>£0.00</b>`}</div>${(p.dueItems||[]).map(item=>`<div style="margin-top:9px"><div class="muted" style="font-size:11px">${escapeHtml(item.description||item.type)} · £${Number(item.amount||0).toFixed(2)}</div><div class="payment-actions"><button type="button" class="payment-action-btn" data-charge-id="${encodeURIComponent(item.chargeId)}" data-action="CASH">CASH</button><button type="button" class="payment-action-btn" data-charge-id="${encodeURIComponent(item.chargeId)}" data-action="WAIVE">WAIVE</button><button type="button" class="payment-action-btn" data-charge-id="${encodeURIComponent(item.chargeId)}" data-action="VOID">VOID</button></div></div>`).join('')}</div>`).join(''):'<div class="muted">Nobody owes anything and no unused account credit ✓</div>';
+  wrap.innerHTML=players.length?players.map((p,idx)=>{
+    const due=Number(p.totalDue||0),credit=Number(p.creditBalance||0);
+    const amountHtml=due>0?`<span class="red">£${due.toFixed(2)} due</span>`:credit>0?`<span class="green">£${credit.toFixed(2)} credit</span>`:`<span>£0.00</span>`;
+    const details=(p.dueItems||[]).map(item=>`<div style="margin:8px 0 0"><div class="muted" style="font-size:11px">${escapeHtml(item.description||item.type)} · £${Number(item.amount||0).toFixed(2)}</div><div class="payment-actions"><button type="button" class="payment-action-btn" data-charge-id="${encodeURIComponent(item.chargeId)}" data-action="CASH">CASH</button><button type="button" class="payment-action-btn" data-charge-id="${encodeURIComponent(item.chargeId)}" data-action="WAIVE">WAIVE</button><button type="button" class="payment-action-btn" data-charge-id="${encodeURIComponent(item.chargeId)}" data-action="VOID">VOID</button></div></div>`).join('');
+    const applied=Number(p.creditApplied||0)>0?`<div class="muted" style="font-size:11px;margin-bottom:6px">£${Number(p.creditApplied).toFixed(2)} account credit applied</div>`:'';
+    return `<div class="admin-balance-player" data-balance-player="${idx}">
+      <button type="button" class="admin-balance-head" onclick="toggleAdminBalancePlayer(${idx})">
+        <span class="admin-balance-name">${escapeHtml(p.name)}</span>
+        <span class="admin-balance-amount">${amountHtml}</span>
+        <span class="admin-balance-chevron">⌄</span>
+      </button>
+      <div class="admin-balance-detail">${applied}${details||'<div class="muted">No outstanding charges.</div>'}</div>
+    </div>`;
+  }).join(''):'<div class="muted">No players found.</div>';
   if(!wrap.dataset.paymentActionsBound){
     wrap.dataset.paymentActionsBound='1';
     wrap.addEventListener('click',async function(e){
@@ -1136,7 +1166,7 @@ function renderFixtures(){
             <div class="muted" style="margin-top:5px">Available: ${Number(f.availableCount||0)} · Not available: ${Number(f.unavailableCount||0)}</div>
             ${renderAvailabilityButtons(f)}
           </div>`).join('')
-      : '<div class="muted">No upcoming fixtures listed.</div>';
+      : `<div class="muted">${window.lastFixturesError?`Could not load fixtures · ${escapeHtml(window.lastFixturesError)}`:'No upcoming fixtures listed.'}</div>`;
   }
 
   if(showBtn){
@@ -1191,8 +1221,10 @@ async function loadFixtures(){
     const data=await res.json();
     if(!res.ok||!data.success||!Array.isArray(data.fixtures)) throw new Error(data.error||'Could not load fixtures');
     currentFixtures=data.fixtures;
+    window.lastFixturesError='';
   }catch(e){
     currentFixtures=[];
+    window.lastFixturesError=e.message||'Could not load fixtures';
   }
   renderFixtures();
 }
