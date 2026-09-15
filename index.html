@@ -69,7 +69,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 .week-control{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 @media(max-width:520px){.home-tnf-status{min-width:92px;font-size:14px;padding:9px 10px}.week-control{grid-template-columns:1fr}}
 
-/* ===== TRACKING PROTOTYPE v0.9.13 (LOCAL ONLY) ===== */
+/* ===== TRACKING PROTOTYPE v0.9.14 (LOCAL ONLY) ===== */
 .track-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
 .track-stat{background:#111318;border:1px solid var(--line);border-radius:10px;padding:10px}
 .track-stat .big{font-size:20px}
@@ -81,7 +81,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 @media(max-width:520px){.track-grid{grid-template-columns:1fr 1fr}.track-grid .track-stat:last-child{grid-column:1/-1}.track-search{flex-direction:column}}
 
 
-/* v0.9.13 — Club Hub alignment + Tracking WIP */
+/* v0.9.14 — Club Hub alignment + Tracking WIP */
 .club-hub-list .btn,
 .club-hub-list button,
 .club-hub-list a {
@@ -943,7 +943,9 @@ const FINE_OPTIONS=[
 ];
 function toggleFinePanel(forceOpen){
   const el=document.getElementById('finePanel'); if(!el)return;
-  if(forceOpen===true)el.classList.add('open'); else el.classList.toggle('open');
+  const opening=forceOpen===true||!el.classList.contains('open');
+  if(opening){el.classList.add('open');populateFineForm();populateCreditPlayers();}
+  else el.classList.remove('open');
 }
 function toggleCreditPanel(forceOpen){
   const el=document.getElementById('creditPanel'); if(!el)return;
@@ -957,11 +959,17 @@ function toggleCreditPanel(forceOpen){
 }
 function paymentAdminMemberOptions(){
   const byEmail={};
+  const normalise=(m)=>{
+    if(!m)return null;
+    const email=String(m.email||m.Email||m.EMAIL||m.emailAddress||m['Email Address']||'').trim().toLowerCase();
+    const name=String(m.name||m.Name||m.NAME||m.player||m.Player||m['Player Name']||email||'').trim();
+    return email?{email,name:name||email}:null;
+  };
   ((currentAdminPayments&&currentAdminPayments.members)||[]).forEach(m=>{
-    const email=String(m.email||'').trim().toLowerCase(); if(email)byEmail[email]={email,name:m.name||email};
+    const x=normalise(m); if(x)byEmail[x.email]=x;
   });
   ((currentAdminPayments&&currentAdminPayments.players)||[]).forEach(m=>{
-    const email=String(m.email||'').trim().toLowerCase(); if(email&&!byEmail[email])byEmail[email]={email,name:m.name||email};
+    const x=normalise(m); if(x&&!byEmail[x.email])byEmail[x.email]=x;
   });
   return Object.values(byEmail).sort((a,b)=>String(a.name).localeCompare(String(b.name)));
 }
@@ -980,8 +988,8 @@ function populateFineForm(){
   const p=document.getElementById('finePlayer'),cp=document.getElementById('creditPlayer'),r=document.getElementById('fineReason');
   const members=paymentAdminMemberOptions();
   const options=members.map(m=>`<option value="${escapeHtml(m.email)}">${escapeHtml(m.name)}</option>`).join('');
-  if(p)p.innerHTML=options;
-  if(cp)cp.innerHTML=options;
+  if(p)p.innerHTML=options||'<option value="">No players loaded</option>';
+  if(cp)cp.innerHTML=options||'<option value="">No players loaded</option>';
   if(r){r.innerHTML=FINE_OPTIONS.map((x,i)=>`<option value="${i}">${escapeHtml(x[0])} · £${x[1]}</option>`).join('');updateFineAmount();}
 }
 function updateFineAmount(){
@@ -997,6 +1005,7 @@ async function loadAdminPayments(){
   renderAdminPayments(); populateFineForm();
 }
 function renderAdminPayments(){
+  populateFineForm(); populateCreditPlayers();
   const sum=document.getElementById('adminPaymentsSummary'),wrap=document.getElementById('adminPaymentsPlayers');
   const owed=document.getElementById('adminOwedTotal'),col=document.getElementById('adminCollectedTotal');
   if(owed)owed.textContent=`£${Number(currentAdminPayments.totalDue||0).toFixed(2)}`;
