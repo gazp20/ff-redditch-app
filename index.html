@@ -69,7 +69,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 .week-control{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 @media(max-width:520px){.home-tnf-status{min-width:92px;font-size:14px;padding:9px 10px}.week-control{grid-template-columns:1fr}}
 
-/* ===== TRACKING PROTOTYPE v0.9.10 (LOCAL ONLY) ===== */
+/* ===== TRACKING PROTOTYPE v0.9.11 (LOCAL ONLY) ===== */
 .track-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
 .track-stat{background:#111318;border:1px solid var(--line);border-radius:10px;padding:10px}
 .track-stat .big{font-size:20px}
@@ -81,7 +81,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 @media(max-width:520px){.track-grid{grid-template-columns:1fr 1fr}.track-grid .track-stat:last-child{grid-column:1/-1}.track-search{flex-direction:column}}
 
 
-/* v0.9.10 — Club Hub alignment + Tracking WIP */
+/* v0.9.11 — Club Hub alignment + Tracking WIP */
 .club-hub-list .btn,
 .club-hub-list button,
 .club-hub-list a {
@@ -315,7 +315,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 <section id="payments" class="screen">
 <div class="hero">
   <div class="eyebrow">PAYMENTS</div>
-  <div class="payment-total" id="paymentsDueTitle">£0.00</div>
+  <div class="payment-total" id="paymentsDueTitle">£0.00</div><div id="paymentsCreditInfo" class="muted" style="margin-top:5px"></div>
   <div class="muted">OUTSTANDING BALANCE</div>
 </div>
 
@@ -434,13 +434,13 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 </div>
 
 <div class="card" id="adminPaymentsCard">
-  <div class="eyebrow">PAYMENTS & FINES</div>
+  <div class="eyebrow">PAYMENTS · FINES · CREDITS</div>
   <div class="row">
     <div>
       <h2>Player balances</h2>
       <div class="muted" id="adminPaymentsSummary">Loading balances…</div>
     </div>
-    <button class="btn btn-gold" onclick="toggleFinePanel()">FINE PLAYER</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-gold" onclick="toggleFinePanel()">FINE PLAYER</button><button class="btn btn-dark" onclick="toggleCreditPanel()">CREDIT PLAYER</button></div>
   </div>
 
   <div id="finePanel" class="fine-panel" style="margin-top:12px">
@@ -457,6 +457,30 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
       </div>
       <button class="btn btn-red" style="width:100%;margin-top:12px" onclick="issueFine()">ISSUE FINE</button>
       <div class="muted" id="fineNotice" style="font-size:11px;margin-top:8px"></div>
+    </div>
+  </div>
+
+  <div id="creditPanel" class="fine-panel" style="margin-top:12px">
+    <div class="card" style="padding:12px;margin:0;background:#131519">
+      <div class="eyebrow">ACCOUNT CREDIT</div>
+      <div class="muted" style="margin-bottom:6px">PLAYER</div>
+      <select id="creditPlayer"></select>
+      <div class="muted" style="margin:10px 0 6px">REASON</div>
+      <select id="creditReason" onchange="updateCreditReason()">
+        <option value="Season prize">12-week FFR League winner</option>
+        <option value="TNF cancellation">TNF cancellation / dropout</option>
+        <option value="11s cancellation">11s cancellation / dropout</option>
+        <option value="Payment adjustment">Payment adjustment</option>
+        <option value="Other">Other / Custom</option>
+      </select>
+      <div id="creditCustomWrap" style="display:none">
+        <div class="muted" style="margin:10px 0 6px">DESCRIPTION</div>
+        <input id="creditCustomDescription" class="field-input" style="width:100%" placeholder="Credit description">
+      </div>
+      <div class="muted" style="margin:10px 0 6px">CREDIT AMOUNT</div>
+      <input id="creditAmount" class="field-input" inputmode="decimal" value="20.00">
+      <button class="btn btn-gold" style="width:100%;margin-top:12px" onclick="issueCredit()">ADD ACCOUNT CREDIT</button>
+      <div class="muted" id="creditNotice" style="font-size:11px;margin-top:8px"></div>
     </div>
   </div>
 
@@ -893,6 +917,9 @@ function renderPayments(){
   const due=document.getElementById('paymentsDueList');
   const hist=document.getElementById('paymentsHistory');
   if(total) total.textContent=`£${Number(currentPayments.totalDue||0).toFixed(2)}`;
+  const creditBalance=Number(currentPayments.creditBalance||0),creditApplied=Number(currentPayments.creditApplied||0);
+  const creditInfo=document.getElementById('paymentsCreditInfo');
+  if(creditInfo)creditInfo.innerHTML=creditBalance>0?`<b class="green">£${creditBalance.toFixed(2)} account credit available</b>`:(creditApplied>0?`<span class="green">£${creditApplied.toFixed(2)} credit applied to current charges</span>`:'');
   const dueItems=Array.isArray(currentPayments.dueItems)?currentPayments.dueItems:[];
   if(due) due.innerHTML=dueItems.length?dueItems.map(item=>`<div class="listrow"><div class="row"><span><b>${escapeHtml(paymentDescription(item))}</b><span class="charge-meta">${escapeHtml(item.dateLabel||'')} · ${escapeHtml(item.type||'CHARGE')}</span></span><b class="red">£${Number(item.amount||0).toFixed(2)}</b></div><button class="btn btn-gold" style="width:100%;margin-top:8px" onclick="startStripePayment('ITEM','${escapeHtml(item.id||item.chargeId||'')}')" disabled>PAY £${Number(item.amount||0).toFixed(2)}</button></div>`).join(''):'<div class="muted">Nothing outstanding ✓</div>';
   const fullBtn=document.getElementById('payFullBalanceBtn');
@@ -902,7 +929,7 @@ function renderPayments(){
     fullBtn.disabled=true;
   }
   const history=Array.isArray(currentPayments.history)?currentPayments.history:[];
-  if(hist) hist.innerHTML=history.length?history.slice(0,30).map(item=>`<div class="listrow row"><span><b>${escapeHtml(paymentDescription(item))}</b><span class="charge-meta">${escapeHtml(item.dateLabel||'')} · ${escapeHtml(paymentStatusLabel(item.status))}</span></span><b class="${item.status==='DUE'?'red':'green'}">£${Number(item.amount||0).toFixed(2)}</b></div>`).join(''):'<div class="muted">No payment history yet.</div>';
+  if(hist) hist.innerHTML=history.length?history.slice(0,30).map(item=>{const isCredit=item.status==='CREDIT'||item.type==='CREDIT';const val=Math.abs(Number(item.amount||0));return `<div class="listrow row"><span><b>${escapeHtml(paymentDescription(item))}</b><span class="charge-meta">${escapeHtml(item.dateLabel||'')} · ${escapeHtml(isCredit?'ACCOUNT CREDIT':paymentStatusLabel(item.status))}</span></span><b class="${isCredit?'green':item.status==='DUE'?'red':'green'}">${isCredit?'+':''}£${val.toFixed(2)}</b></div>`;}).join(''):'<div class="muted">No payment history yet.</div>';
 }
 
 
@@ -918,9 +945,19 @@ function toggleFinePanel(forceOpen){
   const el=document.getElementById('finePanel'); if(!el)return;
   if(forceOpen===true)el.classList.add('open'); else el.classList.toggle('open');
 }
+function toggleCreditPanel(forceOpen){
+  const el=document.getElementById('creditPanel'); if(!el)return;
+  if(forceOpen===true)el.classList.add('open'); else el.classList.toggle('open');
+}
+function updateCreditReason(){
+  const r=document.getElementById('creditReason'),w=document.getElementById('creditCustomWrap');
+  if(w)w.style.display=(r&&r.value==='Other')?'block':'none';
+}
 function populateFineForm(){
-  const p=document.getElementById('finePlayer'),r=document.getElementById('fineReason');
-  if(p){p.innerHTML=(currentAdminPayments.members||[]).map(m=>`<option value="${escapeHtml(m.email)}">${escapeHtml(m.name)}</option>`).join('');}
+  const p=document.getElementById('finePlayer'),cp=document.getElementById('creditPlayer'),r=document.getElementById('fineReason');
+  const options=(currentAdminPayments.members||[]).map(m=>`<option value="${escapeHtml(m.email)}">${escapeHtml(m.name)}</option>`).join('');
+  if(p)p.innerHTML=options;
+  if(cp)cp.innerHTML=options;
   if(r){r.innerHTML=FINE_OPTIONS.map((x,i)=>`<option value="${i}">${escapeHtml(x[0])} · £${x[1]}</option>`).join('');updateFineAmount();}
 }
 function updateFineAmount(){
@@ -940,10 +977,10 @@ function renderAdminPayments(){
   const owed=document.getElementById('adminOwedTotal'),col=document.getElementById('adminCollectedTotal');
   if(owed)owed.textContent=`£${Number(currentAdminPayments.totalDue||0).toFixed(2)}`;
   if(col)col.textContent=`£${Number(currentAdminPayments.totalCollected||0).toFixed(2)}`;
-  const players=(currentAdminPayments.players||[]).filter(p=>Number(p.totalDue||0)>0);
-  if(sum)sum.textContent=`${players.length} player${players.length===1?'':'s'} owing · £${Number(currentAdminPayments.totalDue||0).toFixed(2)} outstanding`;
+  const players=(currentAdminPayments.players||[]).filter(p=>Number(p.totalDue||0)>0||Number(p.creditBalance||0)>0);
+  if(sum)sum.textContent=`£${Number(currentAdminPayments.totalDue||0).toFixed(2)} outstanding · £${Number(currentAdminPayments.totalCredit||0).toFixed(2)} account credit available`;
   if(!wrap)return;
-  wrap.innerHTML=players.length?players.map(p=>`<div class="admin-pay-row"><div class="row"><span><b>${escapeHtml(p.name)}</b><span class="charge-meta">${(p.dueItems||[]).map(x=>escapeHtml(x.description||x.type)).join(' · ')}</span></span><b class="red">£${Number(p.totalDue||0).toFixed(2)}</b></div>${(p.dueItems||[]).map(item=>`<div style="margin-top:9px"><div class="muted" style="font-size:11px">${escapeHtml(item.description||item.type)} · £${Number(item.amount||0).toFixed(2)}</div><div class="payment-actions"><button type="button" class="payment-action-btn" data-charge-id="${encodeURIComponent(item.chargeId)}" data-action="CASH">CASH</button><button type="button" class="payment-action-btn" data-charge-id="${encodeURIComponent(item.chargeId)}" data-action="WAIVE">WAIVE</button><button type="button" class="payment-action-btn" data-charge-id="${encodeURIComponent(item.chargeId)}" data-action="VOID">VOID</button></div></div>`).join('')}</div>`).join(''):'<div class="muted">Nobody owes anything ✓</div>';
+  wrap.innerHTML=players.length?players.map(p=>`<div class="admin-pay-row"><div class="row"><span><b>${escapeHtml(p.name)}</b><span class="charge-meta">${Number(p.creditApplied||0)>0?`£${Number(p.creditApplied).toFixed(2)} credit applied · `:''}${(p.dueItems||[]).map(x=>escapeHtml(x.description||x.type)).join(' · ')}</span></span>${Number(p.totalDue||0)>0?`<b class="red">£${Number(p.totalDue||0).toFixed(2)} due</b>`:`<b class="green">£${Number(p.creditBalance||0).toFixed(2)} credit</b>`}</div>${(p.dueItems||[]).map(item=>`<div style="margin-top:9px"><div class="muted" style="font-size:11px">${escapeHtml(item.description||item.type)} · £${Number(item.amount||0).toFixed(2)}</div><div class="payment-actions"><button type="button" class="payment-action-btn" data-charge-id="${encodeURIComponent(item.chargeId)}" data-action="CASH">CASH</button><button type="button" class="payment-action-btn" data-charge-id="${encodeURIComponent(item.chargeId)}" data-action="WAIVE">WAIVE</button><button type="button" class="payment-action-btn" data-charge-id="${encodeURIComponent(item.chargeId)}" data-action="VOID">VOID</button></div></div>`).join('')}</div>`).join(''):'<div class="muted">Nobody owes anything and no unused account credit ✓</div>';
   if(!wrap.dataset.paymentActionsBound){
     wrap.dataset.paymentActionsBound='1';
     wrap.addEventListener('click',async function(e){
@@ -968,6 +1005,23 @@ async function issueFine(){
   if(!email||!description||!(amount>0)){if(notice)notice.textContent='Choose a player, fine and valid amount.';return;}
   if(notice)notice.textContent='Adding fine…';
   try{const res=await fetch('/api/payments/fine',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({playerEmail:email,description,amount})});const data=await res.json();if(!res.ok||!data.success)throw new Error(data.error||'Could not add fine');if(notice)notice.textContent='Fine added ✓';await Promise.all([loadAdminPayments(),loadPayments()]);}catch(e){if(notice)notice.textContent=e.message||'Could not add fine';}
+}
+async function issueCredit(){
+  const email=document.getElementById('creditPlayer')?.value||'';
+  const reason=document.getElementById('creditReason')?.value||'';
+  let description=reason;
+  if(reason==='Other')description=(document.getElementById('creditCustomDescription')?.value||'Account credit').trim();
+  const amount=Number(document.getElementById('creditAmount')?.value||0);
+  const notice=document.getElementById('creditNotice');
+  if(!email||!description||!(amount>0)){if(notice)notice.textContent='Choose a player, reason and valid credit amount.';return;}
+  if(notice)notice.textContent='Adding credit…';
+  try{
+    const res=await fetch('/api/payments/fine',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({playerEmail:email,description,amount:-Math.abs(amount)})});
+    const data=await res.json();
+    if(!res.ok||!data.success)throw new Error(data.error||'Could not add credit');
+    if(notice)notice.textContent=`£${amount.toFixed(2)} account credit added ✓`;
+    await Promise.all([loadAdminPayments(),loadPayments()]);
+  }catch(e){if(notice)notice.textContent=e.message||'Could not add credit';}
 }
 async function settleCharge(encodedId,action){
   const chargeId=decodeURIComponent(encodedId); if(!chargeId)return false;
