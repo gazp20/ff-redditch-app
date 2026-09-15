@@ -455,6 +455,7 @@ function go(id){
     Promise.allSettled([loadAdminTnf(),loadTnfWeighIn(),loadAdmin11s(),loadAdminPayments()]);
   }
   if(id==='payments' && currentMember){ loadPayments(); }
+  if(id==='ffr' && currentMember){ loadRankings(); }
 }
 
 function formatTnfDate(dateText){
@@ -1290,15 +1291,24 @@ function renderFfr(){
 }
 
 async function loadRankings(){
+  const leagueBody=document.getElementById('ffrLeagueBody');
+  const weightBody=document.getElementById('ffrWeightBody');
+  const team=document.getElementById('ffrTeamWeek');
   try{
-    const res=await fetch('/api/rankings',{cache:'no-store'});
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),12000);
+    const res=await fetch('/api/rankings',{cache:'no-store',signal:controller.signal});
+    clearTimeout(timer);
     const data=await res.json();
     if(!res.ok||!data.success||!Array.isArray(data.members)) throw new Error(data.error||'Could not load rankings');
     currentRankings=data.members;
+    renderFfr();
   }catch(e){
     currentRankings=[];
+    if(leagueBody) leagueBody.innerHTML='<tr><td colspan="3" class="muted">Couldn\'t load league data. Open FFR again to retry.</td></tr>';
+    if(weightBody) weightBody.innerHTML='<tr><td colspan="4" class="muted">Couldn\'t load weight data. Open FFR again to retry.</td></tr>';
+    if(team) team.innerHTML='<div class="muted">Couldn\'t load Team of the Week. Open FFR again to retry.</div>';
   }
-  renderFfr();
 }
 
 
@@ -1607,15 +1617,27 @@ async function saveTnfTeams(published){
 
 async function resetTnfTeams(){
   if(!currentAdminTnf||!currentAdminTnf.session) return;
-
-  (Array.isArray(currentAdminTnf.players)?currentAdminTnf.players:[]).forEach(p=>{
-    tnfTeamAssignments[String(p.email||'').toLowerCase()]='';
-  });
-
-  renderAdminTnfBuilder();
-
   const notice=document.getElementById('adminTnfNotice');
-  notice.textContent='Teams reset locally. Press SAVE DRAFT to store the reset.';
+  const players=Array.isArray(currentAdminTnf.players)?currentAdminTnf.players:[];
+  players.forEach(p=>{tnfTeamAssignments[String(p.email||'').toLowerCase()]='';});
+  renderAdminTnfBuilder();
+  if(notice) notice.textContent='Resetting teams…';
+  try{
+    const res=await fetch('/api/tnf/teams',{
+      method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({sessionId:currentAdminTnf.session.id,assignments:players.map(p=>({email:p.email,team:''})),published:false})
+    });
+    const data=await res.json();
+    if(!res.ok||!data.success) throw new Error(data.error||'Could not reset TNF teams');
+    currentAdminTnf=data;
+    tnfTeamAssignments={};
+    (Array.isArray(data.players)?data.players:[]).forEach(p=>{tnfTeamAssignments[String(p.email||'').toLowerCase()]=String(p.team||'').toUpperCase();});
+    renderAdminTnfBuilder();
+    if(notice) notice.textContent='Teams reset ✓ Player TNF page has been unpublished.';
+    await Promise.allSettled([loadTnf(),loadTnfWeighIn()]);
+  }catch(e){
+    if(notice) notice.textContent=e.message||'Could not reset TNF teams.';
+  }
 }
 
 async function loadTnf(){
@@ -2139,18 +2161,17 @@ function confirmSquad(){
   alert('Prototype: squad confirmed. In the real app, selected players now receive their £6.50 match fee and a selection notification.');
 }
 
-  Promise.allSettled([
-  loadMember(),
-  loadTnf(),
-  loadRankings(),
-  loadClubNews(),
-  loadFixtures(),
-  loadAdmin11s(),
-  loadAdminTnf(),
-  loadTnfWeighIn(),
-  load11sSubs(),
-  loadPayments(),
-  loadAdminPayments()
-]);
+async function bootstrapApp(){
+  // Resolve the signed-in member first. Previously every player + admin API
+  // request fired at once, which could swamp Apps Script and leave cards on Loading….
+  await loadMember();
+  await Promise.allSettled([
+    loadTnf(),loadRankings(),loadClubNews(),loadFixtures(),load11sSubs(),loadPayments()
+  ]);
+  if(isAdminMember()){
+    await Promise.allSettled([loadAdmin11s(),loadAdminTnf(),loadTnfWeighIn(),loadAdminPayments()]);
+  }
+}
+bootstrapApp();
 </script>
 </body></html>
