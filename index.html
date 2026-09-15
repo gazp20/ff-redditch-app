@@ -69,7 +69,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 .week-control{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 @media(max-width:520px){.home-tnf-status{min-width:92px;font-size:14px;padding:9px 10px}.week-control{grid-template-columns:1fr}}
 
-/* ===== TRACKING PROTOTYPE v0.9.16 (LOCAL ONLY) ===== */
+/* ===== TRACKING PROTOTYPE v0.9.17 (LOCAL ONLY) ===== */
 .track-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
 .track-stat{background:#111318;border:1px solid var(--line);border-radius:10px;padding:10px}
 .track-stat .big{font-size:20px}
@@ -81,7 +81,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 @media(max-width:520px){.track-grid{grid-template-columns:1fr 1fr}.track-grid .track-stat:last-child{grid-column:1/-1}.track-search{flex-direction:column}}
 
 
-/* v0.9.16 — Club Hub alignment + Tracking WIP */
+/* v0.9.17 — Club Hub alignment + Tracking WIP */
 .club-hub-list .btn,
 .club-hub-list button,
 .club-hub-list a {
@@ -138,7 +138,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 }
 
 
-/* v0.9.16 Admin player-balance accordion */
+/* v0.9.17 Admin player-balance accordion */
 .admin-balance-player{border-top:1px solid rgba(255,255,255,.08)}
 .admin-balance-head{width:100%;display:grid;grid-template-columns:1fr auto 18px;gap:8px;align-items:center;
   padding:10px 0;background:none;border:0;color:inherit;text-align:left;cursor:pointer}
@@ -148,6 +148,19 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 .admin-balance-detail{display:none;padding:0 0 10px}
 .admin-balance-player.open .admin-balance-detail{display:block}
 .admin-balance-player.open .admin-balance-chevron{transform:rotate(180deg)}
+
+
+/* v0.9.17 compact account mini-statements */
+.mini-statement{border-top:1px solid rgba(255,255,255,.09)}
+.mini-statement:first-child{border-top:0}
+.mini-statement-head{padding:11px 2px}
+.mini-statement-label{display:block;font-size:8px;letter-spacing:.08em;opacity:.42;margin-top:2px}
+.mini-statement-detail{padding:2px 2px 12px}
+.mini-statement-title{font-size:9px;font-weight:900;letter-spacing:.1em;color:#e7c33b;padding:6px 0 7px}
+.mini-statement-line{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:start;padding:8px 0;border-top:1px solid rgba(255,255,255,.07)}
+.mini-statement-actions{grid-column:1/-1;margin-top:3px}
+.mini-statement-credit{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid rgba(255,255,255,.07)}
+.mini-statement-total{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0 1px;margin-top:2px;border-top:1px solid rgba(255,255,255,.16);font-size:11px;font-weight:900}
 
 </style>
 </head>
@@ -1030,20 +1043,44 @@ function renderAdminPayments(){
   const players=(currentAdminPayments.players||[]);
   if(sum)sum.textContent=`£${Number(currentAdminPayments.totalDue||0).toFixed(2)} outstanding · £${Number(currentAdminPayments.totalCredit||0).toFixed(2)} account credit available`;
   if(!wrap)return;
-  wrap.innerHTML=players.length?players.map((p,idx)=>{
-    const due=Number(p.totalDue||0),credit=Number(p.creditBalance||0);
-    const amountHtml=due>0?`<span class="red">£${due.toFixed(2)} due</span>`:credit>0?`<span class="green">£${credit.toFixed(2)} credit</span>`:`<span>£0.00</span>`;
-    const details=(p.dueItems||[]).map(item=>`<div style="margin:8px 0 0"><div class="muted" style="font-size:11px">${escapeHtml(item.description||item.type)} · £${Number(item.amount||0).toFixed(2)}</div><div class="payment-actions"><button type="button" class="payment-action-btn" data-charge-id="${encodeURIComponent(item.chargeId)}" data-action="CASH">CASH</button><button type="button" class="payment-action-btn" data-charge-id="${encodeURIComponent(item.chargeId)}" data-action="WAIVE">WAIVE</button><button type="button" class="payment-action-btn" data-charge-id="${encodeURIComponent(item.chargeId)}" data-action="VOID">VOID</button></div></div>`).join('');
-    const applied=Number(p.creditApplied||0)>0?`<div class="muted" style="font-size:11px;margin-bottom:6px">£${Number(p.creditApplied).toFixed(2)} account credit applied</div>`:'';
-    return `<div class="admin-balance-player" data-balance-player="${idx}">
-      <button type="button" class="admin-balance-head" onclick="toggleAdminBalancePlayer(${idx})">
-        <span class="admin-balance-name">${escapeHtml(p.name)}</span>
-        <span class="admin-balance-amount">${amountHtml}</span>
+  const accountPlayers=players.filter(p=>Number(p.totalDue||0)>0||Number(p.creditBalance||0)>0);
+  wrap.innerHTML=accountPlayers.length?accountPlayers.map((p,idx)=>{
+    const due=Number(p.totalDue||0),credit=Number(p.creditBalance||0),applied=Number(p.creditApplied||0);
+    const balanceHtml=due>0?`<span class="red">£${due.toFixed(2)} due</span>`:`<span class="green">£${credit.toFixed(2)} credit</span>`;
+    const charges=(p.dueItems||[]).map(item=>`<div class="mini-statement-line">
+      <div>
+        <b>${escapeHtml(item.description||item.type)}</b>
+        <div class="charge-meta">${escapeHtml(item.dateLabel||'')} · ${escapeHtml(paymentStatusLabel(item.status))}</div>
+      </div>
+      <b>£${Number(item.amount||0).toFixed(2)}</b>
+      <div class="payment-actions mini-statement-actions">
+        <button type="button" class="payment-action-btn" data-charge-id="${encodeURIComponent(item.chargeId)}" data-action="CASH">CASH</button>
+        <button type="button" class="payment-action-btn" data-charge-id="${encodeURIComponent(item.chargeId)}" data-action="WAIVE">WAIVE</button>
+        <button type="button" class="payment-action-btn" data-charge-id="${encodeURIComponent(item.chargeId)}" data-action="VOID">VOID</button>
+      </div>
+    </div>`).join('');
+    const creditLine=applied>0?`<div class="mini-statement-credit"><span>Account credit applied</span><b class="green">−£${applied.toFixed(2)}</b></div>`:'';
+    const unusedCredit=credit>0?`<div class="mini-statement-credit"><span>Available account credit</span><b class="green">£${credit.toFixed(2)}</b></div>`:'';
+    return `<div class="admin-balance-player mini-statement" data-balance-player="${idx}">
+      <button type="button" class="admin-balance-head mini-statement-head" onclick="toggleAdminBalancePlayer(${idx})">
+        <span>
+          <span class="admin-balance-name">${escapeHtml(p.name)}</span>
+          <span class="mini-statement-label">ACCOUNT SUMMARY</span>
+        </span>
+        <span class="admin-balance-amount">${balanceHtml}</span>
         <span class="admin-balance-chevron">⌄</span>
       </button>
-      <div class="admin-balance-detail">${applied}${details||'<div class="muted">No outstanding charges.</div>'}</div>
+      <div class="admin-balance-detail mini-statement-detail">
+        <div class="mini-statement-title">ACCOUNT STATEMENT</div>
+        ${charges||'<div class="muted" style="padding:8px 0">No outstanding charges.</div>'}
+        ${creditLine}${unusedCredit}
+        <div class="mini-statement-total">
+          <span>${due>0?'OUTSTANDING':'ACCOUNT CREDIT'}</span>
+          <b class="${due>0?'red':'green'}">£${(due>0?due:credit).toFixed(2)}</b>
+        </div>
+      </div>
     </div>`;
-  }).join(''):'<div class="muted">No players found.</div>';
+  }).join(''):'<div class="muted">No outstanding player balances or unused account credit ✓</div>';
   if(!wrap.dataset.paymentActionsBound){
     wrap.dataset.paymentActionsBound='1';
     wrap.addEventListener('click',async function(e){
