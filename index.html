@@ -69,7 +69,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 .week-control{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 @media(max-width:520px){.home-tnf-status{min-width:92px;font-size:14px;padding:9px 10px}.week-control{grid-template-columns:1fr}}
 
-/* ===== TRACKING PROTOTYPE v0.9.9 (LOCAL ONLY) ===== */
+/* ===== TRACKING PROTOTYPE v0.9.10 (LOCAL ONLY) ===== */
 .track-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
 .track-stat{background:#111318;border:1px solid var(--line);border-radius:10px;padding:10px}
 .track-stat .big{font-size:20px}
@@ -79,6 +79,63 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 .meal-head{display:flex;justify-content:space-between;align-items:center}.track-food{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
 .track-days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:9px}.track-day{text-align:center;padding:7px 2px;border:1px solid var(--line);border-radius:8px;font-size:10px}.track-day.done{background:#153d27;color:#91f0b3;border-color:#2d7147}
 @media(max-width:520px){.track-grid{grid-template-columns:1fr 1fr}.track-grid .track-stat:last-child{grid-column:1/-1}.track-search{flex-direction:column}}
+
+
+/* v0.9.10 — Club Hub alignment + Tracking WIP */
+.club-hub-list .btn,
+.club-hub-list button,
+.club-hub-list a {
+  position: relative;
+}
+.club-hub-row {
+  display: grid !important;
+  grid-template-columns: 28px 1fr 28px;
+  align-items: center;
+  min-height: 44px;
+  text-align: left !important;
+  gap: 8px;
+}
+.club-hub-icon {
+  width: 28px;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  line-height: 1;
+}
+.club-hub-label {
+  text-align: left;
+  font-weight: 800;
+}
+.club-hub-chevron {
+  width: 28px;
+  text-align: right;
+  opacity: .55;
+}
+.tracking-wip-banner {
+  border: 1px solid rgba(255, 204, 0, .35);
+  background: rgba(255, 204, 0, .08);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 8px 0 10px;
+}
+.tracking-wip-badge {
+  display: inline-block;
+  background: #e1b93d;
+  color: #111;
+  font-weight: 900;
+  font-size: 10px;
+  letter-spacing: .08em;
+  border-radius: 999px;
+  padding: 4px 8px;
+  margin-bottom: 5px;
+}
+.tracking-wip-copy {
+  font-size: 11px;
+  line-height: 1.4;
+  opacity: .9;
+}
 
 </style>
 </head>
@@ -418,7 +475,11 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 
 
 <section id="tracking" class="screen">
-  <div class="hero"><div class="eyebrow">TRACKING · PROTOTYPE</div><h1>My Food Diary</h1><div class="muted" id="trackDateLabel">Today</div></div>
+  <div class="hero"><div class="eyebrow">TRACKING · PROTOTYPE</div><h1>My Food Diary</h1>
+<div class="tracking-wip-banner">
+  <div class="tracking-wip-badge">WORK IN PROGRESS · SEASON 2 PREVIEW</div>
+  <div class="tracking-wip-copy">Tracking is currently in development. Feel free to test it, but entries and FFP rewards are not yet part of the live FF Redditch system.</div>
+</div><div class="muted" id="trackDateLabel">Today</div></div>
   <div class="card">
     <div class="row"><div><div class="eyebrow">DAILY TARGET</div><h2><span id="trackEaten">0</span> / <span id="trackTarget">2200</span> kcal</h2></div><button class="btn btn-dark" onclick="setTrackTarget()">EDIT TARGET</button></div>
     <div class="track-progress"><i id="trackCalBar"></i></div>
@@ -429,7 +490,8 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
   <div class="card"><div class="muted">Prototype only — entries are saved on this device. Nothing is sent to Google Sheets and no FFP is awarded yet.</div></div>
 </section>
 
-<section id="more" class="screen"><div class="hero"><div class="eyebrow">MORE</div><h1>Club Hub</h1></div><div class="card stack"><button class="btn btn-dark">🍽 Matchday Fuel</button><button class="btn btn-dark">📖 FFR Rule Book</button><button class="btn btn-dark">📰 Club News</button><button class="btn btn-dark">👕 Kit Bag</button><button class="btn btn-dark">👤 Account</button></div></section>
+<section id="more" class="screen"><div class="hero"><div class="eyebrow">MORE</div><h1>MORE · CLUB HUB</h1>
+<div class="muted" style="margin-top:4px">Everything else FF Redditch</div></div><div class="card stack"><button class="btn btn-dark">🍽 Matchday Fuel</button><button class="btn btn-dark">📖 FFR Rule Book</button><button class="btn btn-dark">📰 Club News</button><button class="btn btn-dark">👕 Kit Bag</button><button class="btn btn-dark">👤 Account</button></div></section>
 </main>
 <nav>
 <button class="active" data-s="home" onclick="go('home')"><span class="navicon">⌂</span>Home</button>
