@@ -69,7 +69,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 .week-control{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 @media(max-width:520px){.home-tnf-status{min-width:92px;font-size:14px;padding:9px 10px}.week-control{grid-template-columns:1fr}}
 
-/* ===== TRACKING PROTOTYPE v0.9.12 (LOCAL ONLY) ===== */
+/* ===== TRACKING PROTOTYPE v0.9.13 (LOCAL ONLY) ===== */
 .track-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
 .track-stat{background:#111318;border:1px solid var(--line);border-radius:10px;padding:10px}
 .track-stat .big{font-size:20px}
@@ -81,7 +81,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 @media(max-width:520px){.track-grid{grid-template-columns:1fr 1fr}.track-grid .track-stat:last-child{grid-column:1/-1}.track-search{flex-direction:column}}
 
 
-/* v0.9.12 — Club Hub alignment + Tracking WIP */
+/* v0.9.13 — Club Hub alignment + Tracking WIP */
 .club-hub-list .btn,
 .club-hub-list button,
 .club-hub-list a {
@@ -955,9 +955,19 @@ function toggleCreditPanel(forceOpen){
     el.classList.remove('open');
   }
 }
+function paymentAdminMemberOptions(){
+  const byEmail={};
+  ((currentAdminPayments&&currentAdminPayments.members)||[]).forEach(m=>{
+    const email=String(m.email||'').trim().toLowerCase(); if(email)byEmail[email]={email,name:m.name||email};
+  });
+  ((currentAdminPayments&&currentAdminPayments.players)||[]).forEach(m=>{
+    const email=String(m.email||'').trim().toLowerCase(); if(email&&!byEmail[email])byEmail[email]={email,name:m.name||email};
+  });
+  return Object.values(byEmail).sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+}
 function populateCreditPlayers(){
   const cp=document.getElementById('creditPlayer'); if(!cp)return;
-  const members=(currentAdminPayments&&currentAdminPayments.members)||[];
+  const members=paymentAdminMemberOptions();
   const selected=cp.value;
   cp.innerHTML=members.map(m=>`<option value="${escapeHtml(m.email)}">${escapeHtml(m.name)}</option>`).join('');
   if(selected&&members.some(m=>m.email===selected))cp.value=selected;
@@ -968,10 +978,10 @@ function updateCreditReason(){
 }
 function populateFineForm(){
   const p=document.getElementById('finePlayer'),cp=document.getElementById('creditPlayer'),r=document.getElementById('fineReason');
-  const options=(currentAdminPayments.members||[]).map(m=>`<option value="${escapeHtml(m.email)}">${escapeHtml(m.name)}</option>`).join('');
+  const members=paymentAdminMemberOptions();
+  const options=members.map(m=>`<option value="${escapeHtml(m.email)}">${escapeHtml(m.name)}</option>`).join('');
   if(p)p.innerHTML=options;
   if(cp)cp.innerHTML=options;
-  populateCreditPlayers();
   if(r){r.innerHTML=FINE_OPTIONS.map((x,i)=>`<option value="${i}">${escapeHtml(x[0])} · £${x[1]}</option>`).join('');updateFineAmount();}
 }
 function updateFineAmount(){
