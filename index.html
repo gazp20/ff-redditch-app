@@ -359,7 +359,7 @@ nav button{border:0;background:none;color:#858a93;padding:9px 1px 7px;font-size:
 <div class="card">
   <div class="eyebrow">ONLINE PAYMENT</div>
   <button id="payFullBalanceBtn" class="btn btn-gold" style="width:100%" onclick="startStripePayment('BALANCE')" disabled>PAY FULL BALANCE · £0.00</button>
-  <div id="paymentOnlineNotice" class="muted" style="font-size:11px;margin-top:8px">Stripe setup pending. Payment buttons are ready and will be activated when the club account is connected.</div>
+  <div id="paymentOnlineNotice" class="muted" style="font-size:11px;margin-top:8px">Stripe Sandbox only. Payments activate after secure setup and testing.</div>
 </div>
 </section>
 
@@ -932,6 +932,7 @@ function paymentStatusLabel(status){
   const s=String(status||'').toUpperCase();
   if(s==='PAID_CASH') return 'PAID · CASH';
   if(s==='PAID_STRIPE') return 'PAID · STRIPE';
+  if(s==='USED') return 'CREDIT APPLIED';
   if(s==='WAIVED') return 'WAIVED';
   if(s==='VOID') return 'VOID';
   return 'DUE';
@@ -951,16 +952,24 @@ function renderPayments(){
   if(fullBtn){
     const amount=Number(currentPayments.totalDue||0);
     fullBtn.textContent=`PAY FULL BALANCE · £${amount.toFixed(2)}`;
-    fullBtn.disabled=true;
+    fullBtn.disabled=!(currentPayments.stripeEnabled && amount>=0.30 && !currentPayments.error);
   }
   const history=Array.isArray(currentPayments.history)?currentPayments.history:[];
   if(hist) hist.innerHTML=history.length?history.slice(0,30).map(item=>{const isCredit=item.status==='CREDIT'||item.type==='CREDIT';const val=Math.abs(Number(item.amount||0));return `<div class="listrow row"><span><b>${escapeHtml(paymentDescription(item))}</b><span class="charge-meta">${escapeHtml(item.dateLabel||'')} · ${escapeHtml(isCredit?'ACCOUNT CREDIT':paymentStatusLabel(item.status))}</span></span><b class="${isCredit?'green':item.status==='DUE'?'red':'green'}">${isCredit?'+':''}£${val.toFixed(2)}</b></div>`;}).join(''):'<div class="muted">No payment history yet.</div>';
 }
 
 
-function startStripePayment(mode,chargeId){
+async function startStripePayment(mode,chargeId){
   const notice=document.getElementById('paymentOnlineNotice');
-  if(notice) notice.textContent='Stripe is not connected yet. Payment buttons will activate once the new account is ready.';
+  if(mode!=="BALANCE") {if(notice)notice.textContent="Individual payments are not enabled yet.";return;}
+  if(!currentPayments.stripeEnabled){if(notice)notice.textContent="Stripe Sandbox setup is not complete yet.";return;}
+  if(notice)notice.textContent="Opening secure Stripe Sandbox checkout…";
+  const btn=document.getElementById("payFullBalanceBtn");if(btn)btn.disabled=true;
+  try{
+    const r=await fetch("/api/payments/checkout",{method:"POST",headers:{"content-type":"application/json"},body:"{}"});
+    const data=await r.json();if(!r.ok||!data.success||!data.url)throw Error(data.error||"Checkout unavailable");
+    window.location.assign(data.url);
+  }catch(e){if(notice)notice.textContent=e.message||"Checkout failed";if(btn)btn.disabled=false;}
 }
 
 const FINE_OPTIONS=[
