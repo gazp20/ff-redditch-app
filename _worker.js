@@ -82,6 +82,70 @@ export default {
       }
     }
 
+    // STRIPE SANDBOX. Requires a Cloudflare Access JWT verified against Access JWKS.
+    async function verifiedPaymentEmail(){
+      const jwt=request.headers.get("Cf-Access-Jwt-Assertion")||"";
+      const team=String(env.CF_ACCESS_TEAM_DOMAIN||"").replace(/\/$/,"");
+      const aud=String(env.CF_ACCESS_AUD||"");
+      if(!jwt||!/^https:\/\/[a-z0-9.-]+\.cloudflareaccess\.com$/i.test(team)||!aud)return "";
+      try{
+        const [head,payload,signature]=jwt.split(".");if(!signature)return "";
+        const decode=x=>Uint8Array.from(atob(x.replace(/-/g,"+").replace(/_/g,"/")+"=".repeat((4-x.length%4)%4)),c=>c.charCodeAt(0));
+        const header=JSON.parse(new TextDecoder().decode(decode(head)));
+        const claims=JSON.parse(new TextDecoder().decode(decode(payload)));
+        if(header.alg!=="RS256"||!header.kid||claims.iss!==team||!(Array.isArray(claims.aud)?claims.aud.includes(aud):claims.aud===aud)||Number(claims.exp)*1000<Date.now()||Number(claims.nbf||0)*1000>Date.now()+60000)return "";
+        const jwksRes=await fetch(team+"/cdn-cgi/access/certs");if(!jwksRes.ok)return "";
+        const jwks=await jwksRes.json(),jwk=(jwks.keys||[]).find(k=>k.kid===header.kid);if(!jwk)return "";
+        const key=await crypto.subtle.importKey("jwk",jwk,{name:"RSASSA-PKCS1-v1_5",hash:"SHA-256"},false,["verify"]);
+        const ok=await crypto.subtle.verify("RSASSA-PKCS1-v1_5",key,decode(signature),new TextEncoder().encode(head+"."+payload));
+        return ok?String(claims.email||"").trim().toLowerCase():"";
+      }catch(e){return "";}
+    }
+    async function stripeApi(path,params){
+      const form=new URLSearchParams();for(const [k,v] of Object.entries(params))form.append(k,String(v));
+      const r=await fetch("https://api.stripe.com/v1/"+path,{method:"POST",headers:{"Authorization":"Bearer "+env.STRIPE_SECRET_KEY,"Content-Type":"application/x-www-form-urlencoded"},body:form.toString()});
+      const data=await r.json();if(!r.ok)throw Error(data.error?.message||"Stripe request failed");return data;
+    }
+    async function validStripeSignature(raw,header){
+      const pieces=String(header||"").split(","),timestamp=pieces.find(x=>x.startsWith("t="))?.slice(2),signatures=pieces.filter(x=>x.startsWith("v1=")).map(x=>x.slice(3));
+      if(!timestamp||Math.abs(Date.now()/1000-Number(timestamp))>300||!signatures.length)return false;
+      const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(env.STRIPE_WEBHOOK_SECRET),{name:"HMAC",hash:"SHA-256"},false,["sign"]);
+      const sig=new Uint8Array(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(timestamp+"."+raw)));
+      const hex=[...sig].map(b=>b.toString(16).padStart(2,"0")).join("");return signatures.some(x=>x===hex);
+    }
+    if(url.pathname==="/api/stripe/webhook"){
+      if(request.method!=="POST")return json({success:false},405);
+      if(!env.STRIPE_WEBHOOK_SECRET||!env.STRIPE_SECRET_KEY)return json({success:false,error:"Stripe not configured"},503);
+      const raw=await request.text();if(!await validStripeSignature(raw,request.headers.get("Stripe-Signature")))return json({success:false,error:"Invalid Stripe signature"},400);
+      const event=JSON.parse(raw);if(event.type!=="checkout.session.completed")return json({received:true});
+      const session=event.data?.object||{};
+      if(session.mode!=="payment"||session.payment_status!=="paid"||!String(session.id).startsWith("cs_test_")||session.currency!=="gbp"||!session.metadata?.ffr_intent_id)return json({received:true});
+      const result=await callMembersApi({action:"stripe_complete",intentId:session.metadata.ffr_intent_id,sessionId:session.id,amountPence:session.amount_total,currency:session.currency});
+      let parsed={};try{parsed=JSON.parse(result.body);}catch(e){}
+      if(!result.ok||!parsed.success)return json({success:false,error:"Ledger update failed; Stripe will retry"},500);
+      return json({received:true});
+    }
+    if(url.pathname==="/api/payments/checkout"){
+      if(request.method!=="POST")return json({success:false,error:"POST required"},405);
+      if(!env.STRIPE_SECRET_KEY||!String(env.STRIPE_SECRET_KEY).startsWith("sk_test_"))return json({success:false,error:"Stripe Sandbox not configured"},503);
+      const email=await verifiedPaymentEmail();if(!email)return json({success:false,error:"Verified Cloudflare Access login required"},401);
+      const prepared=await callMembersApi({action:"stripe_prepare",email});let p={};try{p=JSON.parse(prepared.body);}catch(e){}
+      if(!prepared.ok||!p.success)return json({success:false,error:p.error||"Could not prepare checkout"},409);
+      try{
+        const checkout=await stripeApi("checkout/sessions",{
+          mode:"payment", "payment_method_types[0]":"card", "line_items[0][price_data][currency]":"gbp", "line_items[0][price_data][unit_amount]":p.amountPence,
+          "line_items[0][price_data][product_data][name]":"FF Redditch account balance", "line_items[0][quantity]":1,
+          "client_reference_id":p.intentId,"metadata[ffr_intent_id]":p.intentId,"customer_email":email,
+          "success_url":url.origin+"/?stripe=success", "cancel_url":url.origin+"/?stripe=cancel",
+          "expires_at":Math.floor(Date.now()/1000)+1800
+        });
+        if(!String(checkout.id||"").startsWith("cs_test_")||!String(checkout.url||"").startsWith("https://checkout.stripe.com/"))throw Error("Sandbox checkout validation failed");
+        const attached=await callMembersApi({action:"stripe_attach",intentId:p.intentId,sessionId:checkout.id});let a={};try{a=JSON.parse(attached.body);}catch(e){}
+        if(!attached.ok||!a.success)throw Error("Checkout session could not be registered");
+        return json({success:true,url:checkout.url});
+      }catch(e){await callMembersApi({action:"stripe_abort",intentId:p.intentId});return json({success:false,error:"Unable to create checkout. Please try again."},502);}
+    }
+
     if (
       url.pathname === "/api/me" ||
       url.pathname === "/api/me/"
@@ -314,7 +378,7 @@ export default {
 
     if (url.pathname === "/api/payments" || url.pathname === "/api/payments/") {
       const email=getAccessEmail(); if(!email)return json({success:false,error:"Authenticated member email not found"},401);
-      const result=await callMembersApi({action:"payments_my",email});return new Response(result.body,{status:result.status,headers:{"content-type":"application/json; charset=UTF-8","cache-control":"no-store"}});
+      const result=await callMembersApi({action:"payments_my",email});let data={};try{data=JSON.parse(result.body);}catch(e){}data.stripeEnabled=Boolean(env.STRIPE_SECRET_KEY&&String(env.STRIPE_SECRET_KEY).startsWith("sk_test_")&&env.STRIPE_WEBHOOK_SECRET&&env.CF_ACCESS_TEAM_DOMAIN&&env.CF_ACCESS_AUD);return json(data,result.status);
     }
     if (url.pathname === "/api/payments/admin" || url.pathname === "/api/payments/admin/") {
       const email=getAccessEmail(); if(!email)return json({success:false,error:"Authenticated member email not found"},401);
