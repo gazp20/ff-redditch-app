@@ -947,7 +947,7 @@ function renderPayments(){
   const creditInfo=document.getElementById('paymentsCreditInfo');
   if(creditInfo)creditInfo.innerHTML=creditBalance>0?`<b class="green">£${creditBalance.toFixed(2)} account credit available</b>`:(creditApplied>0?`<span class="green">£${creditApplied.toFixed(2)} credit applied to current charges</span>`:'');
   const dueItems=Array.isArray(currentPayments.dueItems)?currentPayments.dueItems:[];
-  if(due) due.innerHTML=dueItems.length?dueItems.map(item=>`<div class="listrow"><div class="row"><span><b>${escapeHtml(paymentDescription(item))}</b><span class="charge-meta">${escapeHtml(item.dateLabel||'')} · ${escapeHtml(item.type||'CHARGE')}</span></span><b class="red">£${Number(item.amount||0).toFixed(2)}</b></div><button class="btn btn-gold" style="width:100%;margin-top:8px" onclick="startStripePayment('ITEM','${escapeHtml(item.id||item.chargeId||'')}')" disabled>PAY £${Number(item.amount||0).toFixed(2)}</button></div>`).join(''):'<div class="muted">Nothing outstanding ✓</div>';
+  if(due) due.innerHTML=dueItems.length?dueItems.map(item=>`<div class="listrow"><div class="row"><span><b>${escapeHtml(paymentDescription(item))}</b><span class="charge-meta">${escapeHtml(item.dateLabel||'')} · ${escapeHtml(item.type||'CHARGE')}</span></span><b class="red">£${Number(item.amount||0).toFixed(2)}</b></div><button class="btn btn-gold" style="width:100%;margin-top:8px" onclick="startStripePayment('ITEM','${escapeHtml(item.id||item.chargeId||'')}')" ${!(currentPayments.stripeEnabled && (item.id||item.chargeId) && Number(item.amount||0)>=0.30 && !currentPayments.error)?"disabled":""}>PAY £${Number(item.amount||0).toFixed(2)}</button></div>`).join(''):'<div class="muted">Nothing outstanding ✓</div>';
   const fullBtn=document.getElementById('payFullBalanceBtn');
   if(fullBtn){
     const amount=Number(currentPayments.totalDue||0);
@@ -961,15 +961,15 @@ function renderPayments(){
 
 async function startStripePayment(mode,chargeId){
   const notice=document.getElementById('paymentOnlineNotice');
-  if(mode!=="BALANCE") {if(notice)notice.textContent="Individual payments are not enabled yet.";return;}
+  if(!["BALANCE","ITEM"].includes(mode)){if(notice)notice.textContent="Invalid payment option.";return;}
   if(!currentPayments.stripeEnabled){if(notice)notice.textContent="Stripe Sandbox setup is not complete yet.";return;}
   if(notice)notice.textContent="Opening secure Stripe Sandbox checkout…";
   const btn=document.getElementById("payFullBalanceBtn");if(btn)btn.disabled=true;
   try{
-    const r=await fetch("/api/payments/checkout",{method:"POST",headers:{"content-type":"application/json"},body:"{}"});
+    const r=await fetch("/api/payments/checkout",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({mode,chargeId:mode==="ITEM"?chargeId:""})});
     const data=await r.json();if(!r.ok||!data.success||!data.url)throw Error(data.error||"Checkout unavailable");
     window.location.assign(data.url);
-  }catch(e){if(notice)notice.textContent=e.message||"Checkout failed";if(btn)btn.disabled=false;}
+  }catch(e){if(notice)notice.textContent=e.message||"Checkout failed";if(btn)btn.disabled=false;await loadPayments();}
 }
 
 const FINE_OPTIONS=[
