@@ -85,7 +85,8 @@ export default {
     // STRIPE SANDBOX. Requires a Cloudflare Access JWT verified against Access JWKS.
     async function verifiedPaymentEmail(){
       const jwt=request.headers.get("Cf-Access-Jwt-Assertion")||"";
-      const team=String(env.CF_ACCESS_TEAM_DOMAIN||"").replace(/\/$/,"");
+      const configuredTeam=String(env.CF_ACCESS_TEAM_DOMAIN||"").trim().replace(/\/$/,"");
+      const team=/^https?:\/\//i.test(configuredTeam)?configuredTeam:"https://"+configuredTeam;
       const aud=String(env.CF_ACCESS_AUD||"");
       if(!jwt||!/^https:\/\/[a-z0-9.-]+\.cloudflareaccess\.com$/i.test(team)||!aud)return "";
       try{
