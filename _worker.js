@@ -134,7 +134,7 @@ export default {
       if(!prepared.ok||!p.success)return json({success:false,error:p.error||"Could not prepare checkout"},409);
       try{
         const checkout=await stripeApi("checkout/sessions",{
-          mode:"payment", "payment_method_types[0]":"card", "line_items[0][price_data][currency]":"gbp", "line_items[0][price_data][unit_amount]":p.amountPence,
+          mode:"payment", "line_items[0][price_data][currency]":"gbp", "line_items[0][price_data][unit_amount]":p.amountPence,
           "line_items[0][price_data][product_data][name]":"FF Redditch account balance", "line_items[0][quantity]":1,
           "client_reference_id":p.intentId,"metadata[ffr_intent_id]":p.intentId,"customer_email":email,
           "success_url":url.origin+"/?stripe=success", "cancel_url":url.origin+"/?stripe=cancel",
