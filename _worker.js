@@ -130,12 +130,17 @@ export default {
       if(request.method!=="POST")return json({success:false,error:"POST required"},405);
       if(!env.STRIPE_SECRET_KEY||!String(env.STRIPE_SECRET_KEY).startsWith("sk_test_"))return json({success:false,error:"Stripe Sandbox not configured"},503);
       const email=await verifiedPaymentEmail();if(!email)return json({success:false,error:"Verified Cloudflare Access login required"},401);
-      const prepared=await callMembersApi({action:"stripe_prepare",email});let p={};try{p=JSON.parse(prepared.body);}catch(e){}
+      let input={};try{input=await request.json();}catch(e){return json({success:false,error:"Invalid JSON"},400);}
+       const mode=String(input.mode||"BALANCE").toUpperCase();
+       if(!["BALANCE","ITEM"].includes(mode))return json({success:false,error:"Invalid payment mode"},400);
+       const chargeId=mode==="ITEM"?String(input.chargeId||"").trim():"";
+       if(mode==="ITEM"&&!chargeId)return json({success:false,error:"Charge ID required"},400);
+       const prepared=await callMembersApi({action:"stripe_prepare",email,mode,chargeId});let p={};try{p=JSON.parse(prepared.body);}catch(e){}
       if(!prepared.ok||!p.success)return json({success:false,error:p.error||"Could not prepare checkout"},409);
       try{
         const checkout=await stripeApi("checkout/sessions",{
           mode:"payment", "line_items[0][price_data][currency]":"gbp", "line_items[0][price_data][unit_amount]":p.amountPence,
-          "line_items[0][price_data][product_data][name]":"FF Redditch account balance", "line_items[0][quantity]":1,
+          "line_items[0][price_data][product_data][name]":mode==="ITEM"?"FF Redditch individual charge":"FF Redditch account balance", "line_items[0][quantity]":1,
           "client_reference_id":p.intentId,"metadata[ffr_intent_id]":p.intentId,"customer_email":email,
           "success_url":url.origin+"/?stripe=success", "cancel_url":url.origin+"/?stripe=cancel",
           "expires_at":Math.floor(Date.now()/1000)+1800
